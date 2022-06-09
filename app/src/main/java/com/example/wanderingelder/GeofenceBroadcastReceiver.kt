@@ -17,6 +17,9 @@ import com.google.android.gms.location.GeofencingEvent
 
 class GeofenceBroadcastReceiver : BroadcastReceiver()
 {
+    init{
+        println("Broadcast Receiver online")
+    }
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onReceive(p0: Context?, p1: Intent?) {
         println(p1?.action)
@@ -27,6 +30,10 @@ class GeofenceBroadcastReceiver : BroadcastReceiver()
             println(errorMsg)
             return
         }
+
+        if(geoFencingEvent?.geofenceTransition?.equals(Geofence.GEOFENCE_TRANSITION_ENTER) == true)
+        {
+
 
         println(geoFencingEvent?.triggeringGeofences?.get(0)?.requestId)
         val geofenceTransition = geoFencingEvent?.geofenceTransition
@@ -47,7 +54,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver()
         var builder = NotificationCompat.Builder(p0, "1")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("Alert")
-            .setContentText("Geofence has been broken")
+            .setContentText("Geofence "+ geoFencingEvent?.triggeringGeofences?.get(0)?.requestId+" has been broken")
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setFullScreenIntent(
@@ -55,12 +62,14 @@ class GeofenceBroadcastReceiver : BroadcastReceiver()
                     Intent(p0, GeofenceBroadcastReceiver::class.java),
                     PendingIntent.FLAG_UPDATE_CURRENT), true)
         notificationManager.notify(2, builder.build())
-
+    }
 
 
         //sendNotification(geofenceTransitionDetails)
 //        Toast.makeText(p0, "You have activate my message", Toast.LENGTH_LONG)
         println("Intent Fired")
     }
+
+
 
 }

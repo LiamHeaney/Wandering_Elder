@@ -31,6 +31,7 @@ import com.google.android.gms.common.api.GoogleApi
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.*
 import org.intellij.lang.annotations.JdkConstants
+import java.util.jar.Attributes
 
 
 class MainActivity : ComponentActivity() {
@@ -41,6 +42,8 @@ class MainActivity : ComponentActivity() {
 
     var lastLocation:Location =  Location("network")
 
+    lateinit var myGeoFencePendingIntent: PendingIntent
+    var gAPI = GoogleApi.Settings.Builder().build()
     //var latLong :LiveData<String> = LiveData<String>
     @SuppressLint("NewApi", "MissingPermission")
     @RequiresApi(Build.VERSION_CODES.M)
@@ -50,6 +53,7 @@ class MainActivity : ComponentActivity() {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         geofencingClient = LocationServices.getGeofencingClient(this)
+
 //        fusedLocationProviderClient.lastLocation.apply {
 //            addOnSuccessListener { location ->
 //                if (location != null) {
@@ -68,10 +72,13 @@ class MainActivity : ComponentActivity() {
 //            addOnFailureListener { println("Location Unavailable") }
 //        }
         geoFenceList.add(Geofence.Builder()
-            .setRequestId("entry.key")
+            .setRequestId(getNextLocation())
             .setCircularRegion(0.0,0.0, 50f)
             .setExpirationDuration(Geofence.NEVER_EXPIRE)
-            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER
+                or Geofence.GEOFENCE_TRANSITION_EXIT
+                    or Geofence.GEOFENCE_TRANSITION_DWELL)
+            .setLoiteringDelay(1000)
             .build())
 
         var locResponses = LocationServices.getSettingsClient(this).checkLocationSettings(LocationSettingsRequest.Builder()
@@ -85,16 +92,16 @@ class MainActivity : ComponentActivity() {
 
         }
 
-        var builder = NotificationCompat.Builder(this, "1")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("GeoFence Added")
-            .setContentText("A GeoFence has been added at this location")
-            .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setFullScreenIntent(
-                PendingIntent.getActivity(this, 0,
-                Intent(this, GeofenceBroadcastReceiver::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT), true)
+//        var builder = NotificationCompat.Builder(this, "1")
+//            .setSmallIcon(R.drawable.ic_launcher_foreground)
+//            .setContentTitle("GeoFence Added")
+//            .setContentText("A GeoFence has been added at this location")
+//            .setPriority(NotificationCompat.PRIORITY_MAX)
+//            .setCategory(NotificationCompat.CATEGORY_ALARM)
+//            .setFullScreenIntent(
+//                PendingIntent.getActivity(this, 0,
+//                Intent(this, GeofenceBroadcastReceiver::class.java),
+//                PendingIntent.FLAG_UPDATE_CURRENT), true)
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(
@@ -102,6 +109,11 @@ class MainActivity : ComponentActivity() {
                 "Notification Channel",
                 NotificationManager.IMPORTANCE_HIGH).apply { description = "Geofence added alert" })
 
+        myGeoFencePendingIntent = PendingIntent.getBroadcast(this,
+        0,
+        Intent(this, GeofenceBroadcastReceiver::class.java,),
+        PendingIntent.FLAG_UPDATE_CURRENT)
+        this.sendBroadcast(Intent(this, GeofenceBroadcastReceiver::class.java))
         val geoFencePendingIntent:PendingIntent by lazy {
             val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
 //            intent.action = ACTION_GEOFENCE_EVENT
@@ -141,45 +153,18 @@ class MainActivity : ComponentActivity() {
 //
                     Button(onClick = { println("Adding Current Location")
                         Log.e("Button", "Button Clicked")
-                       // notificationManager.notify(1, builder.build())
-//                        fusedLocationProviderClient.lastLocation.apply {
-//                            addOnSuccessListener { location ->
-//                                if (location != null) {
-//                                    lat = location.latitude
-//                                    long = location.longitude
-//                                    geoFenceList.add(
-//                                        Geofence.Builder()
-//                                            .setRequestId("Current_Loc")
-//                                            .setCircularRegion(
-//                                                location.latitude,
-//                                                location.longitude,
-//                                                50f
-//                                            )
-//                                            .setExpirationDuration(Geofence.NEVER_EXPIRE)
-//                                            .setTransitionTypes(
-//                                                Geofence.GEOFENCE_TRANSITION_ENTER
-//                                                        or Geofence.GEOFENCE_TRANSITION_DWELL
-//                                                            or Geofence.GEOFENCE_TRANSITION_EXIT
-//                                            )
-//                                            .setLoiteringDelay(1000)
-//                                            .build()
-//                                    )
-//                                    geofencingClient.addGeofences(
-//                                        getGeofencingRequest(),
-//                                        geoFencePendingIntent
-//                                    ).run {
-//                                        addOnSuccessListener {
-//                                            println("Location(s) Added")
-//                                        }
-//                                        addOnFailureListener {
-//                                            println("Error. Location failed to add")
-//                                        }
-//                                    }
-//                                    msg = "Geofence added"
-//                                    notificationManager.notify(1, builder.build())
-//                                }
-//                            }
-//                        }
+                        addGeofence(geoFencePendingIntent, notificationManager
+//                            , myPendingIntent
+                        )
+                        msg = "Geofence added"
+                        fusedLocationProviderClient.lastLocation.apply {
+                            addOnSuccessListener { location ->
+                                if (location != null) {
+                                    lat = location.latitude
+                                    long = location.longitude
+                                }
+                            }
+                        }
 
                     }, content = {
                         Text("Click Me to add a Geofence!")
@@ -208,31 +193,23 @@ fun displayLatLong(lat:Double, long:Double)
 
 
     @SuppressLint("MissingPermission")
-    private fun addGeofence()
+    private fun addGeofence(geoFencePendingIntent:PendingIntent,
+                            notificationManager:NotificationManager
+//                            , myPendingIntent:PendingIntent
+    )
     {
-        var builder = NotificationCompat.Builder(this, "1")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("GeoFence Added")
-            .setContentText("A GeoFence has been added at this location")
-            .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setFullScreenIntent(
-                PendingIntent.getActivity(this, 0,
-                    Intent(this, GeofenceBroadcastReceiver::class.java),
-                    PendingIntent.FLAG_UPDATE_CURRENT), true)
-
+       var name = getNextLocation()
         fusedLocationProviderClient.lastLocation.apply {
             addOnSuccessListener { location ->
                 if (location != null) {
-                    lat = location.latitude
-                    long = location.longitude
+                    lastLocation = location
                     geoFenceList.add(
                         Geofence.Builder()
-                            .setRequestId("Current_Loc")
+                            .setRequestId(name)
                             .setCircularRegion(
                                 location.latitude,
                                 location.longitude,
-                                50f
+                                100f
                             )
                             .setExpirationDuration(Geofence.NEVER_EXPIRE)
                             .setTransitionTypes(
@@ -243,6 +220,7 @@ fun displayLatLong(lat:Double, long:Double)
                             .setLoiteringDelay(1000)
                             .build()
                     )
+//                    geofencingClient.removeGeofences(geoFencePendingIntent)
                     geofencingClient.addGeofences(
                         getGeofencingRequest(),
                         geoFencePendingIntent
@@ -253,17 +231,58 @@ fun displayLatLong(lat:Double, long:Double)
                         addOnFailureListener {
                             println("Error. Location failed to add")
                         }
+
                     }
-                    msg = "Geofence added"
-                    notificationManager.notify(1, builder.build())
+//                    geoFenceList.add(
+//                        Geofence.Builder()
+//                            .setRequestId("Current_Loc2")
+//                            .setCircularRegion(
+//                                location.latitude,
+//                                location.longitude,
+//                                100f
+//                            )
+//                            .setExpirationDuration(Geofence.NEVER_EXPIRE)
+//                            .setTransitionTypes(
+//                                Geofence.GEOFENCE_TRANSITION_ENTER
+////                                        or Geofence.GEOFENCE_TRANSITION_DWELL
+////                                        or Geofence.GEOFENCE_TRANSITION_EXIT
+//                            )
+//                            .setLoiteringDelay(1000)
+//                            .build()
+//                    )
+//                    geofencingClient.addGeofences(
+//                        getGeofencingRequest(),
+//                        myGeoFencePendingIntent
+//                    ).run {
+//                        addOnSuccessListener {
+//                            println("Location(s) Added")
+//                        }
+//                        addOnFailureListener {
+//                            println("Error. Location failed to add")
+//                        }
+//
+//                    }
+
                 }
             }
         }
+        var builder = NotificationCompat.Builder(this, "1")
+        .setSmallIcon(R.drawable.ic_launcher_foreground)
+        .setContentTitle("GeoFence Added")
+        .setContentText(name+"  has been added at this location")
+        .setPriority(NotificationCompat.PRIORITY_MAX)
+        .setCategory(NotificationCompat.CATEGORY_ALARM)
+        .setFullScreenIntent(
+            PendingIntent.getActivity(this, 0,
+                Intent(this, GeofenceBroadcastReceiver::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT), true)
+
+        notificationManager.notify(1, builder.build())
     }
     private fun getGeofencingRequest():GeofencingRequest
     {
         return GeofencingRequest.Builder().apply {
-                setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_DWELL)
+                setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
                 .addGeofences(geoFenceList)
         } .build()
     }
@@ -310,5 +329,9 @@ fun displayLatLong(lat:Double, long:Double)
         {
             println("Permissions already given")
         }
+    }
+    fun getNextLocation():String
+    {
+        return   NameGen.getGeofenceName()
     }
 }
