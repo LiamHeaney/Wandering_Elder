@@ -36,6 +36,11 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LiveData
+import androidx.navigation.NavController
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.wanderingelder.ui.theme.WanderingElderTheme
 import com.google.android.gms.common.api.GoogleApi
 import com.google.android.gms.common.api.GoogleApiClient
@@ -59,59 +64,23 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        askForPermissions()
+        while(!askForPermissions()){}
+
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         geofencingClient = LocationServices.getGeofencingClient(this)
 
-//        fusedLocationProviderClient.lastLocation.apply {
-//            addOnSuccessListener { location ->
-//                if (location != null) {
-//                    println("location found")
-//                    println("Location: "+location.longitude +" "+ location.latitude)
-//                    geoFenceList.add(Geofence.Builder()
-//                        .setRequestId("entry.key")
-//                        .setCircularRegion(location.latitude, location.longitude, 50f)
-//                        .setExpirationDuration(Geofence.NEVER_EXPIRE)
-//                        .setTransitionTypes(
-//                            Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_DWELL)
-//                        .setLoiteringDelay(1000)
-//                        .build())
-//                    }
-//                }
-//            addOnFailureListener { println("Location Unavailable") }
-//        }
-        geoFenceList.add(Geofence.Builder()
-            .setRequestId(getNextLocation())
-            .setCircularRegion(0.0,0.0, 50f)
-            .setExpirationDuration(Geofence.NEVER_EXPIRE)
-            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER
-                or Geofence.GEOFENCE_TRANSITION_EXIT
-                    or Geofence.GEOFENCE_TRANSITION_DWELL)
-            .setLoiteringDelay(1000)
-            .build())
+//        geoFenceList.add(Geofence.Builder()
+//            .setRequestId(getNextLocation())
+//            .setCircularRegion(0.0,0.0, 50f)
+//            .setExpirationDuration(Geofence.NEVER_EXPIRE)
+//            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER
+//                or Geofence.GEOFENCE_TRANSITION_EXIT
+//                    or Geofence.GEOFENCE_TRANSITION_DWELL)
+//            .setLoiteringDelay(1000)
+//            .build())
 
-        var locResponses = LocationServices.getSettingsClient(this).checkLocationSettings(LocationSettingsRequest.Builder()
-            .addLocationRequest(
-                LocationRequest.create().apply {
-                priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-                }
-            ).build())
-        locResponses.addOnCompleteListener{
-            println("responses")
 
-        }
-
-//        var builder = NotificationCompat.Builder(this, "1")
-//            .setSmallIcon(R.drawable.ic_launcher_foreground)
-//            .setContentTitle("GeoFence Added")
-//            .setContentText("A GeoFence has been added at this location")
-//            .setPriority(NotificationCompat.PRIORITY_MAX)
-//            .setCategory(NotificationCompat.CATEGORY_ALARM)
-//            .setFullScreenIntent(
-//                PendingIntent.getActivity(this, 0,
-//                Intent(this, GeofenceBroadcastReceiver::class.java),
-//                PendingIntent.FLAG_UPDATE_CURRENT), true)
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(
@@ -123,23 +92,22 @@ class MainActivity : ComponentActivity() {
         0,
         Intent(this, GeofenceBroadcastReceiver::class.java,),
         PendingIntent.FLAG_UPDATE_CURRENT)
-        this.sendBroadcast(Intent(this, GeofenceBroadcastReceiver::class.java))
+//        this.sendBroadcast(Intent(this, GeofenceBroadcastReceiver::class.java))
         val geoFencePendingIntent:PendingIntent by lazy {
             val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
-//            intent.action = ACTION_GEOFENCE_EVENT
             PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
         }
-        geofencingClient.addGeofences(
-            getGeofencingRequest(),
-            geoFencePendingIntent
-        ).run {
-            addOnSuccessListener {
-                println("Location(s) Added")
-            }
-            addOnFailureListener {
-                println("Error. Location failed to add")
-            }
-        }
+//        geofencingClient.addGeofences(
+//            getGeofencingRequest(),
+//            geoFencePendingIntent
+//        ).run {
+//            addOnSuccessListener {
+//                println("Location(s) Added")
+//            }
+//            addOnFailureListener {
+//                println("Error. Location failed to add")
+//            }
+//        }
 
         setContent {
             var msg by remember{
@@ -151,7 +119,16 @@ class MainActivity : ComponentActivity() {
             var long by remember {
                 mutableStateOf(0.0)
             }
+            val navController = rememberNavController()
             WanderingElderTheme {
+//                NavHost(navController = navController, startDestination = "MainActivity")
+//                {
+//                    composable("MainActivity"){MainActivity()}
+//                    composable("MainScreen"){launchMainScreen()}
+//                }
+//                navController.navigate("MainScreen"){
+//                    println("Navigation?")
+//                }
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -160,30 +137,26 @@ class MainActivity : ComponentActivity() {
                     verticalArrangement = Arrangement.Center
 
                 ) {
-//                    Spacer(modifier = Modifier.absolutePadding(top=150.dp))
-//                    Greeting("Android")
-//                    Text("Blank spot")
-//
                     Button(modifier = Modifier.size(250.dp),
                         shape = CircleShape,
                         colors = ButtonDefaults.textButtonColors(backgroundColor = Color.Red,
                             contentColor = Color.White),
                         onClick = { println("Adding Current Location")
-                        Log.e("Button", "Button Clicked")
-                        addGeofence(geoFencePendingIntent, notificationManager
+                            Log.e("Button", "Button Clicked")
+                            addGeofence(geoFencePendingIntent, notificationManager
 //                            , myPendingIntent
-                        )
-                        msg = "Geofence added"
-                        fusedLocationProviderClient.lastLocation.apply {
-                            addOnSuccessListener { location ->
-                                if (location != null) {
-                                    lat = location.latitude
-                                    long = location.longitude
+                            )
+                            msg = "Geofence added"
+                            fusedLocationProviderClient.lastLocation.apply {
+                                addOnSuccessListener { location ->
+                                    if (location != null) {
+                                        lat = location.latitude
+                                        long = location.longitude
+                                    }
                                 }
                             }
-                        }
 
-                    }, content = {
+                        },content = {
                             val textPaintStroke = Paint().asFrameworkPaint().apply {
                                 isAntiAlias = true
                                 style = android.graphics.Paint.Style.STROKE
@@ -241,7 +214,8 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
 
-                    })
+                        })
+
                     Button(onClick = { println("Location1")
                                      },
                         content ={
@@ -263,7 +237,11 @@ fun displayLatLong(lat:Double, long:Double)
     Text(text = "Latitude: "+lat)
     Text(text = "Longitude: "+long)
 }
-
+@SuppressLint("MissingPermission")
+@Composable
+fun displayBigRedButton()
+{
+}
 
     @SuppressLint("MissingPermission")
     private fun addGeofence(geoFencePendingIntent:PendingIntent,
@@ -306,35 +284,6 @@ fun displayLatLong(lat:Double, long:Double)
                         }
 
                     }
-//                    geoFenceList.add(
-//                        Geofence.Builder()
-//                            .setRequestId("Current_Loc2")
-//                            .setCircularRegion(
-//                                location.latitude,
-//                                location.longitude,
-//                                100f
-//                            )
-//                            .setExpirationDuration(Geofence.NEVER_EXPIRE)
-//                            .setTransitionTypes(
-//                                Geofence.GEOFENCE_TRANSITION_ENTER
-////                                        or Geofence.GEOFENCE_TRANSITION_DWELL
-////                                        or Geofence.GEOFENCE_TRANSITION_EXIT
-//                            )
-//                            .setLoiteringDelay(1000)
-//                            .build()
-//                    )
-//                    geofencingClient.addGeofences(
-//                        getGeofencingRequest(),
-//                        myGeoFencePendingIntent
-//                    ).run {
-//                        addOnSuccessListener {
-//                            println("Location(s) Added")
-//                        }
-//                        addOnFailureListener {
-//                            println("Error. Location failed to add")
-//                        }
-//
-//                    }
 
                 }
             }
@@ -367,7 +316,7 @@ fun displayLatLong(lat:Double, long:Double)
         return mLocationRequest
     }
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun askForPermissions()
+    private fun askForPermissions():Boolean
     {
         if (ActivityCompat.checkSelfPermission(this,
                 ACCESS_FINE_LOCATION
@@ -383,13 +332,19 @@ fun displayLatLong(lat:Double, long:Double)
                 ACCESS_COARSE_LOCATION
             )
                     != PERMISSION_GRANTED  )
+            ||
+            (ActivityCompat.checkSelfPermission(this,
+                SEND_SMS
+            )
+                    != PERMISSION_GRANTED  )
         ) {
             println("Permissions Error")
 
             requestPermissions(
                 arrayOf(ACCESS_FINE_LOCATION,
                     ACCESS_COARSE_LOCATION,
-                    ACCESS_BACKGROUND_LOCATION),
+                    ACCESS_BACKGROUND_LOCATION,
+                SEND_SMS),
                 0)
 
             var coarse = ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION)== PERMISSION_GRANTED
@@ -402,6 +357,14 @@ fun displayLatLong(lat:Double, long:Double)
         {
             println("Permissions already given")
         }
+        return (ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION)==PERMISSION_GRANTED
+                &&
+        ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION)==PERMISSION_GRANTED
+                &&
+        ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION)==PERMISSION_GRANTED
+                &&
+        ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION)==PERMISSION_GRANTED
+        )
     }
     fun getNextLocation():String
     {

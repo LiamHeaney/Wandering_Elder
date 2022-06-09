@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.telephony.SmsManager
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -14,6 +15,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
+import java.time.LocalDateTime
 
 class GeofenceBroadcastReceiver : BroadcastReceiver()
 {
@@ -22,7 +24,6 @@ class GeofenceBroadcastReceiver : BroadcastReceiver()
     }
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onReceive(p0: Context?, p1: Intent?) {
-        println(p1?.action)
         val geoFencingEvent = p1?.let { GeofencingEvent.fromIntent(it) }
         if(geoFencingEvent?.hasError() == true)
         {
@@ -30,7 +31,8 @@ class GeofenceBroadcastReceiver : BroadcastReceiver()
             println(errorMsg)
             return
         }
-
+//        println("Time is: "+LocalDateTime.now().hour)
+//        if(LocalDateTime.now().hour<8 || LocalDateTime.now().hour>20)
         if(geoFencingEvent?.geofenceTransition?.equals(Geofence.GEOFENCE_TRANSITION_ENTER) == true)
         {
 
@@ -67,7 +69,19 @@ class GeofenceBroadcastReceiver : BroadcastReceiver()
 
         //sendNotification(geofenceTransitionDetails)
 //        Toast.makeText(p0, "You have activate my message", Toast.LENGTH_LONG)
-        println("Intent Fired")
+        println("Intent Fired " +
+                when(geoFencingEvent?.geofenceTransition){
+                    Geofence.GEOFENCE_TRANSITION_DWELL-> "Dwell Event"
+                    Geofence.GEOFENCE_TRANSITION_EXIT-> "Exit Event"
+                    Geofence.GEOFENCE_TRANSITION_ENTER-> "Enter Event"
+
+                    else -> {" Unknown Event"}
+                }
+
+
+                )
+//        val smsManager = SmsManager.getDefault()
+//        smsManager.sendTextMessage("+17038530779", null, "text Message for YOU", null, null)
     }
 
 
