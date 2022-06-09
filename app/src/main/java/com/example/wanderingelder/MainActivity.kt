@@ -16,12 +16,22 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -143,15 +153,22 @@ class MainActivity : ComponentActivity() {
             }
             WanderingElderTheme {
                 Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment=Alignment.CenterHorizontally
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Gray),
+                    horizontalAlignment=Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
 
                 ) {
-                    Spacer(modifier = Modifier.absolutePadding(top=250.dp))
+//                    Spacer(modifier = Modifier.absolutePadding(top=150.dp))
 //                    Greeting("Android")
 //                    Text("Blank spot")
 //
-                    Button(onClick = { println("Adding Current Location")
+                    Button(modifier = Modifier.size(250.dp),
+                        shape = CircleShape,
+                        colors = ButtonDefaults.textButtonColors(backgroundColor = Color.Red,
+                            contentColor = Color.White),
+                        onClick = { println("Adding Current Location")
                         Log.e("Button", "Button Clicked")
                         addGeofence(geoFencePendingIntent, notificationManager
 //                            , myPendingIntent
@@ -167,7 +184,63 @@ class MainActivity : ComponentActivity() {
                         }
 
                     }, content = {
-                        Text("Click Me to add a Geofence!")
+                            val textPaintStroke = Paint().asFrameworkPaint().apply {
+                                isAntiAlias = true
+                                style = android.graphics.Paint.Style.STROKE
+                                textSize = 30f
+                                color = android.graphics.Color.BLACK
+                                strokeWidth = 12f
+                                strokeMiter= 10f
+                                strokeJoin = android.graphics.Paint.Join.ROUND
+                            }
+
+                            val textPaint = Paint().asFrameworkPaint().apply {
+                                isAntiAlias = true
+                                style = android.graphics.Paint.Style.FILL
+                                textSize = 30f
+                                color = android.graphics.Color.WHITE
+                            }
+
+                            Canvas(
+                                modifier = Modifier.absoluteOffset(x = -70.dp, y = -20.dp),
+                                onDraw = {
+                                    drawIntoCanvas {
+                                        it.nativeCanvas.drawText(
+                                            "Click here to add a",
+                                            0f,
+                                            0.dp.toPx(),
+                                            textPaintStroke
+                                        )
+
+                                        it.nativeCanvas.drawText(
+                                            "Click here to add a",
+                                            0f,
+                                            0.dp.toPx(),
+                                            textPaint
+                                        )
+
+                                    }
+                                }
+                            )
+                            Canvas(modifier = Modifier.absoluteOffset(x = (-100).dp, y = 20.dp),
+                                onDraw = {
+                                    drawIntoCanvas {
+                                        it.nativeCanvas.drawText(
+                                            "geofence at this location",
+                                            0f,
+                                            0.dp.toPx(),
+                                            textPaintStroke
+                                        )
+                                        it.nativeCanvas.drawText(
+                                            "geofence at this location",
+                                            0f,
+                                            0.dp.toPx(),
+                                            textPaint
+                                        )
+                                    }
+                                }
+                            )
+
                     })
                     Button(onClick = { println("Location1")
                                      },
