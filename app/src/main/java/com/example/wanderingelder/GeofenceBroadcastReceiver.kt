@@ -1,12 +1,12 @@
 package com.example.wanderingelder
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
+import android.app.*
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Build
+import android.preference.PreferenceManager
 import android.telephony.SmsManager
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -19,11 +19,14 @@ import java.time.LocalDateTime
 
 class GeofenceBroadcastReceiver : BroadcastReceiver()
 {
+    lateinit var sharedPreferences: SharedPreferences
     init{
         println("Broadcast Receiver online")
+
     }
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onReceive(p0: Context?, p1: Intent?) {
+        sharedPreferences =p0!!.getSharedPreferences("prefs", Context.MODE_PRIVATE)
         val geoFencingEvent = p1?.let { GeofencingEvent.fromIntent(it) }
         if(geoFencingEvent?.hasError() == true)
         {
@@ -69,7 +72,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver()
 
         //sendNotification(geofenceTransitionDetails)
 //        Toast.makeText(p0, "You have activate my message", Toast.LENGTH_LONG)
-        println("Intent Fired " +
+        println("Intent Fired\n"+
                 when(geoFencingEvent?.geofenceTransition){
                     Geofence.GEOFENCE_TRANSITION_DWELL-> "Dwell Event"
                     Geofence.GEOFENCE_TRANSITION_EXIT-> "Exit Event"
@@ -80,8 +83,9 @@ class GeofenceBroadcastReceiver : BroadcastReceiver()
 
 
                 )
-//        val smsManager = SmsManager.getDefault()
-//        smsManager.sendTextMessage("+17038530779", null, "text Message for YOU", null, null)
+        val smsManager = SmsManager.getDefault()
+        val destinationAddress:String = sharedPreferences.getString("target_phone_number", "+17038530779")?:"+17038530779"
+        smsManager.sendTextMessage(destinationAddress, null, "text Message for YOU", null, null)
     }
 
 

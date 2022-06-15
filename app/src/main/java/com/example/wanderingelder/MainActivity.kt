@@ -7,82 +7,71 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager.PERMISSION_GRANTED
-import android.location.Location
+import android.location.Geocoder
 import android.os.Build
 import android.os.Bundle
-import android.os.Looper
+import android.preference.PreferenceManager
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Text
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.*
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.lifecycle.LiveData
-import androidx.navigation.NavController
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.example.wanderingelder.ui.theme.WanderingElderTheme
-import com.google.android.gms.common.api.GoogleApi
-import com.google.android.gms.common.api.GoogleApiClient
+import com.google.accompanist.pager.*
 import com.google.android.gms.location.*
-import org.intellij.lang.annotations.JdkConstants
-import java.util.jar.Attributes
+import kotlinx.coroutines.launch
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class MainActivity : ComponentActivity() {
 
+
     lateinit var  geofencingClient:GeofencingClient
     var geoFenceList : MutableList<Geofence> = ArrayList<Geofence>()
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
-
-    var lastLocation:Location =  Location("network")
+    var addressText:String = ""
+    lateinit var geocoder : Geocoder
+    lateinit var notificationManager:NotificationManager
 
     lateinit var myGeoFencePendingIntent: PendingIntent
-    var gAPI = GoogleApi.Settings.Builder().build()
-    //var latLong :LiveData<String> = LiveData<String>
+    lateinit var sharedPreferences: SharedPreferences
+
     @SuppressLint("NewApi", "MissingPermission")
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         while(!askForPermissions()){}
-
+        GeofenceRepo.initialize(this)
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        geocoder = Geocoder(this)
+        Locale.getDefault()
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         geofencingClient = LocationServices.getGeofencingClient(this)
 
-//        geoFenceList.add(Geofence.Builder()
-//            .setRequestId(getNextLocation())
-//            .setCircularRegion(0.0,0.0, 50f)
-//            .setExpirationDuration(Geofence.NEVER_EXPIRE)
-//            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER
-//                or Geofence.GEOFENCE_TRANSITION_EXIT
-//                    or Geofence.GEOFENCE_TRANSITION_DWELL)
-//            .setLoiteringDelay(1000)
-//            .build())
-
-
-
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(
             NotificationChannel("1",
                 "Notification Channel",
@@ -92,229 +81,351 @@ class MainActivity : ComponentActivity() {
         0,
         Intent(this, GeofenceBroadcastReceiver::class.java,),
         PendingIntent.FLAG_UPDATE_CURRENT)
-//        this.sendBroadcast(Intent(this, GeofenceBroadcastReceiver::class.java))
+
+        setContent {
+            WanderingElderTheme {
+                TabLayout()
+            }
+        }
+    }
+
+    @Composable
+    fun displayLatLong(lat:Double, long:Double)
+    {
+        Text(text = "Latitude: "+GeofenceRepo.lastLat)
+        Text(text = "Longitude: "+GeofenceRepo.lastLong)
+    }
+    @OptIn(ExperimentalUnitApi::class, ExperimentalPagerApi::class)
+    @Composable
+    fun TabLayout() {
+
+        val pagerState = rememberPagerState(pageCount = 3)
+
+        Column(
+            modifier = Modifier.background(Color.Gray)
+        ) {
+            TopAppBar(backgroundColor = Color.LightGray) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Wandering Elder Application",
+                        style = TextStyle(color = Color.Black),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = TextUnit(
+                            18F,
+                            TextUnitType.Sp
+                        ),
+                        modifier = Modifier.padding(all = Dp(5F)),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+            Tabs(pagerState = pagerState)
+            TabsContent(pagerState = pagerState)
+        }
+    }
+    @ExperimentalPagerApi
+    @Composable
+    fun Tabs(pagerState: PagerState) {
+        val tabsList = listOf(
+            "MainScreen" to Icons.Default.Home,
+            "Create a Marker" to Icons.Default.Add,
+            "Settings" to Icons.Default.Settings
+        )
+        val scope = rememberCoroutineScope()
+        TabRow(selectedTabIndex = pagerState.currentPage,
+            indicator = {
+                tabPositions ->
+                TabRowDefaults.Indicator(
+                    Modifier.pagerTabIndicatorOffset(pagerState, tabPositions),
+                    height = 2.dp,
+                    color = Color.White
+                )
+            },
+            backgroundColor = Color.LightGray,
+            contentColor = Color.Black
+        ) {
+            tabsList.forEachIndexed { index, value ->
+                Tab(
+                    icon = {
+                        Icon(imageVector = tabsList[index].second, contentDescription = null)
+                    },
+                    text = {
+                        Text(
+                            tabsList[index].first,
+                            color = if (pagerState.currentPage == index) Color.Black else Color.DarkGray
+                        )
+                    },
+                    selected = pagerState.currentPage == index,
+                    onClick = {
+                        scope.launch {
+                            pagerState.animateScrollToPage(index)
+                            Log.e("Pager", "Moving to new tab")
+                        }
+                    }
+                )
+            }
+        }
+    }
+    @ExperimentalPagerApi
+    @Composable
+    fun TabsContent(pagerState: PagerState) {
+        val tabsList = listOf(
+            "MainScreen" to Icons.Default.Home,
+            "Create a Marker" to Icons.Default.Add,
+            "Settings" to Icons.Default.Settings
+        )
+        HorizontalPager(state = pagerState) {
+                page ->
+            when (page) {
+                0 -> TabContentScreen(content = "Welcome to "+tabsList[0].first)
+                1 -> addGeofenceScreen()
+                2 -> launchSettingsScreen(this@MainActivity)
+            // TabContentScreen(content = "Welcome to "+tabsList[2].first)
+            }
+        }
+    }
+    @Composable
+    fun TabContentScreen(content: String) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = content,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    @Composable
+    fun addGeofenceScreen()
+    {
+        var msg by remember{mutableStateOf("no Message")}
+        var lat by remember {mutableStateOf(0.0)}
+        var long by remember {mutableStateOf(0.0)}
         val geoFencePendingIntent:PendingIntent by lazy {
             val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
             PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
         }
-//        geofencingClient.addGeofences(
-//            getGeofencingRequest(),
-//            geoFencePendingIntent
-//        ).run {
-//            addOnSuccessListener {
-//                println("Location(s) Added")
-//            }
-//            addOnFailureListener {
-//                println("Error. Location failed to add")
-//            }
-//        }
+        Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Gray),
+        horizontalAlignment=Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
 
-        setContent {
-            var msg by remember{
-                mutableStateOf("no Message")
-            }
-            var lat by remember {
-            mutableStateOf(0.0)
-            }
-            var long by remember {
-                mutableStateOf(0.0)
-            }
-            val navController = rememberNavController()
-            WanderingElderTheme {
-//                NavHost(navController = navController, startDestination = "MainActivity")
-//                {
-//                    composable("MainActivity"){MainActivity()}
-//                    composable("MainScreen"){launchMainScreen()}
-//                }
-//                navController.navigate("MainScreen"){
-//                    println("Navigation?")
-//                }
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Gray),
-                    horizontalAlignment=Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-
-                ) {
-                    Button(modifier = Modifier.size(250.dp),
-                        shape = CircleShape,
-                        colors = ButtonDefaults.textButtonColors(backgroundColor = Color.Red,
-                            contentColor = Color.White),
-                        onClick = { println("Adding Current Location")
-                            Log.e("Button", "Button Clicked")
-                            addGeofence(geoFencePendingIntent, notificationManager
-//                            , myPendingIntent
-                            )
-                            msg = "Geofence added"
-                            fusedLocationProviderClient.lastLocation.apply {
-                                addOnSuccessListener { location ->
-                                    if (location != null) {
-                                        lat = location.latitude
-                                        long = location.longitude
-                                    }
-                                }
-                            }
-
-                        },content = {
-                            val textPaintStroke = Paint().asFrameworkPaint().apply {
-                                isAntiAlias = true
-                                style = android.graphics.Paint.Style.STROKE
-                                textSize = 30f
-                                color = android.graphics.Color.BLACK
-                                strokeWidth = 12f
-                                strokeMiter= 10f
-                                strokeJoin = android.graphics.Paint.Join.ROUND
-                            }
-
-                            val textPaint = Paint().asFrameworkPaint().apply {
-                                isAntiAlias = true
-                                style = android.graphics.Paint.Style.FILL
-                                textSize = 30f
-                                color = android.graphics.Color.WHITE
-                            }
-
-                            Canvas(
-                                modifier = Modifier.absoluteOffset(x = -70.dp, y = -20.dp),
-                                onDraw = {
-                                    drawIntoCanvas {
-                                        it.nativeCanvas.drawText(
-                                            "Click here to add a",
-                                            0f,
-                                            0.dp.toPx(),
-                                            textPaintStroke
-                                        )
-
-                                        it.nativeCanvas.drawText(
-                                            "Click here to add a",
-                                            0f,
-                                            0.dp.toPx(),
-                                            textPaint
-                                        )
-
-                                    }
-                                }
-                            )
-                            Canvas(modifier = Modifier.absoluteOffset(x = (-100).dp, y = 20.dp),
-                                onDraw = {
-                                    drawIntoCanvas {
-                                        it.nativeCanvas.drawText(
-                                            "geofence at this location",
-                                            0f,
-                                            0.dp.toPx(),
-                                            textPaintStroke
-                                        )
-                                        it.nativeCanvas.drawText(
-                                            "geofence at this location",
-                                            0f,
-                                            0.dp.toPx(),
-                                            textPaint
-                                        )
-                                    }
-                                }
-                            )
-
-                        })
-
-                    Button(onClick = { println("Location1")
-                                     },
-                        content ={
-                        Text("Move me (Unavailable)")
-                    })
-
-
-                   displayLatLong(lat, long)
-                    Text(text = (msg))
-
-                }
-            }
-        }
-    }
-
-@Composable
-fun displayLatLong(lat:Double, long:Double)
-{
-    Text(text = "Latitude: "+lat)
-    Text(text = "Longitude: "+long)
-}
-@SuppressLint("MissingPermission")
-@Composable
-fun displayBigRedButton()
-{
-}
-
-    @SuppressLint("MissingPermission")
-    private fun addGeofence(geoFencePendingIntent:PendingIntent,
-                            notificationManager:NotificationManager
-//                            , myPendingIntent:PendingIntent
-    )
-    {
-       var name = getNextLocation()
-        fusedLocationProviderClient.lastLocation.apply {
-            addOnSuccessListener { location ->
-                if (location != null) {
-                    lastLocation = location
-                    geoFenceList.add(
-                        Geofence.Builder()
-                            .setRequestId(name)
-                            .setCircularRegion(
-                                location.latitude,
-                                location.longitude,
-                                100f
-                            )
-                            .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                            .setTransitionTypes(
-                                Geofence.GEOFENCE_TRANSITION_ENTER
-                                        or Geofence.GEOFENCE_TRANSITION_DWELL
-                                        or Geofence.GEOFENCE_TRANSITION_EXIT
-                            )
-                            .setLoiteringDelay(1000)
-                            .build()
-                    )
-//                    geofencingClient.removeGeofences(geoFencePendingIntent)
-                    geofencingClient.addGeofences(
-                        getGeofencingRequest(),
-                        geoFencePendingIntent
-                    ).run {
-                        addOnSuccessListener {
-                            println("Location(s) Added")
-                        }
-                        addOnFailureListener {
-                            println("Error. Location failed to add")
-                        }
-
+        ) {
+            Button(modifier = Modifier.size(250.dp),
+                shape = CircleShape,
+                colors = ButtonDefaults.textButtonColors(backgroundColor = Color.Red,
+                    contentColor = Color.White),
+                onClick = { println("Adding Current Location")
+                    Log.e("Button", "Button Clicked")
+                    GeofenceRepo.addGeofenceAtCurrentLocation()
+                    fusedLocationProviderClient.lastLocation.apply {
+//                        addOnSuccessListener { location ->
+//                            if (location != null) {
+//                                lat = location.latitude
+//                                long = location.longitude
+//                                addGeofence(geoFencePendingIntent, notificationManager,
+//                                        lat, long, 1
+//                                )
+//                                addGeofence(GeofenceRepo.myGeoFencePendingIntent,
+//                                GeofenceRepo.notificationManager, lat, long, 1)
+//                            }
+//                        }
                     }
 
-                }
-            }
-        }
-        var builder = NotificationCompat.Builder(this, "1")
-        .setSmallIcon(R.drawable.ic_launcher_foreground)
-        .setContentTitle("GeoFence Added")
-        .setContentText(name+"  has been added at this location")
-        .setPriority(NotificationCompat.PRIORITY_MAX)
-        .setCategory(NotificationCompat.CATEGORY_ALARM)
-        .setFullScreenIntent(
-            PendingIntent.getActivity(this, 0,
-                Intent(this, GeofenceBroadcastReceiver::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT), true)
+                    msg = "Geofence added"
 
-        notificationManager.notify(1, builder.build())
+                    Log.e("Navigation", "Attempting navigation to MainScreen")
+//                    navController.navigate("MainScreen")
+
+                },content = {
+                    val textPaintStroke = Paint().asFrameworkPaint().apply {
+                        isAntiAlias = true
+                        style = android.graphics.Paint.Style.STROKE
+                        textSize = 30f
+                        color = android.graphics.Color.BLACK
+                        strokeWidth = 12f
+                        strokeMiter= 10f
+                        strokeJoin = android.graphics.Paint.Join.ROUND
+                    }
+
+                    val textPaint = Paint().asFrameworkPaint().apply {
+                        isAntiAlias = true
+                        style = android.graphics.Paint.Style.FILL
+                        textSize = 30f
+                        color = android.graphics.Color.WHITE
+                    }
+
+                    Canvas(
+                        modifier = Modifier.absoluteOffset(x = -55.dp, y = -20.dp),
+                        onDraw = {
+                            drawIntoCanvas {
+                                it.nativeCanvas.drawText(
+                                    "Click here to add a",
+                                    0f,
+                                    0.dp.toPx(),
+                                    textPaintStroke
+                                )
+
+                                it.nativeCanvas.drawText(
+                                    "Click here to add a",
+                                    0f,
+                                    0.dp.toPx(),
+                                    textPaint
+                                )
+
+                            }
+                        }
+                    )
+                    Canvas(modifier = Modifier.absoluteOffset(x = (-80).dp, y = 20.dp),
+                        onDraw = {
+                            drawIntoCanvas {
+                                it.nativeCanvas.drawText(
+                                    "geofence at this location",
+                                    0f,
+                                    0.dp.toPx(),
+                                    textPaintStroke
+                                )
+                                it.nativeCanvas.drawText(
+                                    "geofence at this location",
+                                    0f,
+                                    0.dp.toPx(),
+                                    textPaint
+                                )
+                            }
+                        }
+                    )
+
+                })
+            var text by remember {
+                mutableStateOf("")
+            }
+            Row()
+            {
+                Column(horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center){
+                    Spacer(modifier = Modifier.size(40.dp))
+                    Text("Address:", textAlign = TextAlign.Center)
+                }
+
+                TextField(
+                    value = text, onValueChange = { text = it
+                                                  addressText = text},
+                    label = { Text("Enter the address you would like to monitor", color = Color.Black) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .absolutePadding(10.dp, 10.dp, 10.dp, 10.dp),
+
+                )
+            }
+
+            Button(onClick = {
+                println("Attempting to add geofence at: $addressText")
+                try{
+                    var addressList = geocoder.getFromLocationName(addressText, 1)
+                    lat = addressList[0].latitude
+                    long = addressList[0].longitude
+                    GeofenceRepo.addGeofence(addressList[0].latitude, addressList[0].longitude, 1)
+//                    addGeofence(geoFencePendingIntent, notificationManager, lat, long, 1
+//                    )
+                    msg = "Geofence added at: $addressText"
+                }catch(e:Exception)
+                {
+                    Log.e("Error", "Failed to translate input into address")
+                }
+
+                             },
+                content ={
+                Text("Add geofence at address location")
+            })
+
+
+//           displayLatLong(GeofenceRepo.lastLat, GeofenceRepo.lastLong)
+//            Text(text = (msg))
+
+        }
     }
-    private fun getGeofencingRequest():GeofencingRequest
-    {
-        return GeofencingRequest.Builder().apply {
-                setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
-                .addGeofences(geoFenceList)
-        } .build()
-    }
-    private fun createLocationRequest(): LocationRequest {
-        val mLocationRequest = LocationRequest()
-        mLocationRequest.interval = 3000
-        mLocationRequest.fastestInterval = 3000
-        mLocationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        return mLocationRequest
-    }
+
+
+
+
+//    @SuppressLint("MissingPermission")
+//    private fun addGeofence(geoFencePendingIntent:PendingIntent,
+//                            notificationManager:NotificationManager, lat:Double, long:Double, type:Int
+//    )
+//    {
+//       var name = getNextLocation()
+
+//        fusedLocationProviderClient.lastLocation.apply {
+//                    geoFenceList.add(
+//                        Geofence.Builder()
+//                            .setRequestId(name)
+//                            .setCircularRegion(
+//                                lat,
+//                                long,
+//                                100f
+//                            )
+//                            .setExpirationDuration(Geofence.NEVER_EXPIRE)
+//                            .setTransitionTypes(type
+//                            )
+//                            .setLoiteringDelay(1000)
+//                            .build()
+//                    )
+////                    geofencingClient.removeGeofences(geoFencePendingIntent)
+//                    geofencingClient.addGeofences(
+//                        getGeofencingRequest(),
+//                        geoFencePendingIntent
+//                    ).run {
+//                        addOnSuccessListener {
+//                            println("Location(s) Added")
+//                        }
+//                        addOnFailureListener {
+//                            println("Error. Location failed to add")
+//                        }
+//
+//                    }
+//
+//                }
+////            }
+////        }
+//        var builder = NotificationCompat.Builder(this, "1")
+//        .setSmallIcon(R.drawable.ic_launcher_foreground)
+//        .setContentTitle("GeoFence Added")
+//        .setContentText(name+"  has been added at this location")
+//        .setPriority(NotificationCompat.PRIORITY_MAX)
+//        .setCategory(NotificationCompat.CATEGORY_ALARM)
+//        .setFullScreenIntent(
+//            PendingIntent.getActivity(this, 0,
+//                Intent(this, GeofenceBroadcastReceiver::class.java),
+//                PendingIntent.FLAG_UPDATE_CURRENT), true)
+//
+//        notificationManager.notify(1, builder.build())
+//    }
+
+//    private fun getGeofencingRequest():GeofencingRequest
+//    {
+//        return GeofencingRequest.Builder().apply {
+//                setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+//                .addGeofences(geoFenceList)
+//        } .build()
+//    }
+//    private fun createLocationRequest(): LocationRequest {
+//        val mLocationRequest = LocationRequest()
+//        mLocationRequest.interval = 3000
+//        mLocationRequest.fastestInterval = 3000
+//        mLocationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+//        return mLocationRequest
+//    }
+
     @RequiresApi(Build.VERSION_CODES.M)
     private fun askForPermissions():Boolean
     {
