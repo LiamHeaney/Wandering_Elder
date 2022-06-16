@@ -11,8 +11,13 @@ import android.content.Intent
 import android.location.Geocoder
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.*
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -21,6 +26,7 @@ import kotlin.collections.ArrayList
 object GeofenceRepo
 {
 
+    var geofenceDistance:Float = 100f
     var lastLat:Double = 0.0
     var lastLong:Double = 0.0
     lateinit var  geofencingClient:GeofencingClient
@@ -33,10 +39,12 @@ object GeofenceRepo
     lateinit var myContext: Context
     lateinit var myGeoFencePendingIntent: PendingIntent
     private var geofenceList = ArrayList<Geofence>()
+    private lateinit var mActivity:MainActivity
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun initialize(context: Context)
+    fun initialize(context: Context, activity: MainActivity)
     {
+        mActivity=activity
         myContext=context
         geocoder = Geocoder(context)
         Locale.getDefault()
@@ -62,9 +70,7 @@ object GeofenceRepo
         fusedLocationProviderClient.lastLocation.apply {
             addOnSuccessListener { location ->
                 if (location != null) {
-                    addGeofence(
-                        location.latitude, location.longitude, 1
-                    )
+                   addGeofence(location.latitude, location.longitude, 1)
                 }
             }
         }
@@ -76,6 +82,8 @@ object GeofenceRepo
         long: Double,
         type: Int
     ) {
+
+        println("Attempting to add geofence from REPO")
         lastLat = lat
         lastLong = long
         var name = NameGen.getGeofenceName()
@@ -86,7 +94,7 @@ object GeofenceRepo
                     .setCircularRegion(
                         lat,
                         long,
-                        100f
+                        geofenceDistance
                     )
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
                     .setTransitionTypes(type)
@@ -98,25 +106,29 @@ object GeofenceRepo
                 myGeoFencePendingIntent
             ).run {
                 addOnSuccessListener {
+
                     println("Location(s) Added")
+                    mActivity.showMsg("Location Added")
+                    var builder = NotificationCompat.Builder(myContext, "1")
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentTitle("GeoFence Added")
+                    .setContentText("$name  has been added at this location")
+                    .setPriority(NotificationCompat.PRIORITY_MAX)
+                    .setCategory(NotificationCompat.CATEGORY_ALARM)
+                    .setFullScreenIntent(
+                        PendingIntent.getActivity(
+                            myContext, 0,
+                            Intent(myContext, GeofenceBroadcastReceiver::class.java),
+                            PendingIntent.FLAG_UPDATE_CURRENT), true)
+
+                    notificationManager.notify(1, builder.build())
                 }
                 addOnFailureListener {
                     println("Error. Location failed to add")
+                    mActivity.showMsg("Error. Please Contact Support")
                 }
             }
-            var builder = NotificationCompat.Builder(myContext, "1")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("GeoFence Added")
-            .setContentText(name+"  has been added at this location")
-            .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setFullScreenIntent(
-                PendingIntent.getActivity(
-                    myContext, 0,
-                    Intent(myContext, GeofenceBroadcastReceiver::class.java),
-                    PendingIntent.FLAG_UPDATE_CURRENT), true)
 
-            notificationManager.notify(1, builder.build())
         }
 
     }

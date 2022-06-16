@@ -83,9 +83,9 @@ class GeofenceBroadcastReceiver : BroadcastReceiver()
 
 
                 )
-        val smsManager = SmsManager.getDefault()
-        val destinationAddress:String = sharedPreferences.getString("target_phone_number", "+17038530779")?:"+17038530779"
-        smsManager.sendTextMessage(destinationAddress, null, "text Message for YOU", null, null)
+//        val smsManager = SmsManager.getDefault()
+//        val destinationAddress:String = sharedPreferences.getString("target_phone_number", "+17038530779")?:"+17038530779"
+//        smsManager.sendTextMessage(destinationAddress, null, "text Message for YOU", null, null)
     }
 
 

@@ -20,6 +20,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -34,36 +35,43 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.example.wanderingelder.ui.theme.WanderingElderTheme
 import com.google.accompanist.pager.*
 import com.google.android.gms.location.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.ceil
 
 
 class MainActivity : ComponentActivity() {
 
 
     lateinit var  geofencingClient:GeofencingClient
-    var geoFenceList : MutableList<Geofence> = ArrayList<Geofence>()
+//    var geoFenceList : MutableList<Geofence> = ArrayList<Geofence>()
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     var addressText:String = ""
     lateinit var geocoder : Geocoder
     lateinit var notificationManager:NotificationManager
 
+    var state : SnackbarHostState = SnackbarHostState()
     lateinit var myGeoFencePendingIntent: PendingIntent
     lateinit var sharedPreferences: SharedPreferences
+
+//    var geofenceDistance:Float = 100f
 
     @SuppressLint("NewApi", "MissingPermission")
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         while(!askForPermissions()){}
-        GeofenceRepo.initialize(this)
+        GeofenceRepo.initialize(this, this@MainActivity)
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         geocoder = Geocoder(this)
         Locale.getDefault()
@@ -85,16 +93,38 @@ class MainActivity : ComponentActivity() {
         setContent {
             WanderingElderTheme {
                 TabLayout()
+
+            }
+        }
+    }
+    @Preview
+    @Composable
+    fun preview()
+    {
+        setContent {
+            WanderingElderTheme {
+                TabLayout()
+
             }
         }
     }
 
-    @Composable
-    fun displayLatLong(lat:Double, long:Double)
-    {
-        Text(text = "Latitude: "+GeofenceRepo.lastLat)
-        Text(text = "Longitude: "+GeofenceRepo.lastLong)
+
+    fun showMsg(s:String){
+        GlobalScope.launch{
+            state.showSnackbar(s)
+        }
     }
+
+
+
+
+//    @Composable
+//    fun displayLatLong(lat:Double, long:Double)
+//    {
+//        Text(text = "Latitude: "+GeofenceRepo.lastLat)
+//        Text(text = "Longitude: "+GeofenceRepo.lastLong)
+//    }
     @OptIn(ExperimentalUnitApi::class, ExperimentalPagerApi::class)
     @Composable
     fun TabLayout() {
@@ -124,12 +154,31 @@ class MainActivity : ComponentActivity() {
                 }
             }
             Tabs(pagerState = pagerState)
+            spaceForSnackBar(state = state)
             TabsContent(pagerState = pagerState)
         }
     }
+    
+    @Composable
+    fun spaceForSnackBar(state: SnackbarHostState)
+    {
+        if(state.currentSnackbarData?.message != null)
+        {
+            SnackbarHost(hostState = state)
+        }
+        else
+        {
+            Spacer(modifier = Modifier.size(1.dp, 72.dp).fillMaxWidth())
+        }
+       
+                
+    }
+    
+    
     @ExperimentalPagerApi
     @Composable
     fun Tabs(pagerState: PagerState) {
+
         val tabsList = listOf(
             "MainScreen" to Icons.Default.Home,
             "Create a Marker" to Icons.Default.Add,
@@ -183,7 +232,7 @@ class MainActivity : ComponentActivity() {
             when (page) {
                 0 -> TabContentScreen(content = "Welcome to "+tabsList[0].first)
                 1 -> addGeofenceScreen()
-                2 -> launchSettingsScreen(this@MainActivity)
+                2 -> launchSettingsScreen(this@MainActivity,this@MainActivity)
             // TabContentScreen(content = "Welcome to "+tabsList[2].first)
             }
         }
@@ -206,13 +255,15 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun addGeofenceScreen()
     {
-        var msg by remember{mutableStateOf("no Message")}
-        var lat by remember {mutableStateOf(0.0)}
-        var long by remember {mutableStateOf(0.0)}
-        val geoFencePendingIntent:PendingIntent by lazy {
-            val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
-            PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
-        }
+//        var msg by remember{mutableStateOf("no Message")}
+//        var lat by remember {mutableStateOf(0.0)}
+//        var long by remember {mutableStateOf(0.0)}
+//        val geoFencePendingIntent:PendingIntent by lazy {
+//            val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
+//            PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+//        }
+
+
         Column(
         modifier = Modifier
             .fillMaxSize()
@@ -227,8 +278,9 @@ class MainActivity : ComponentActivity() {
                     contentColor = Color.White),
                 onClick = { println("Adding Current Location")
                     Log.e("Button", "Button Clicked")
+
                     GeofenceRepo.addGeofenceAtCurrentLocation()
-                    fusedLocationProviderClient.lastLocation.apply {
+//                    fusedLocationProviderClient.lastLocation.apply {
 //                        addOnSuccessListener { location ->
 //                            if (location != null) {
 //                                lat = location.latitude
@@ -240,9 +292,9 @@ class MainActivity : ComponentActivity() {
 //                                GeofenceRepo.notificationManager, lat, long, 1)
 //                            }
 //                        }
-                    }
+//                    }
 
-                    msg = "Geofence added"
+//                    msg = "Geofence added"
 
                     Log.e("Navigation", "Attempting navigation to MainScreen")
 //                    navController.navigate("MainScreen")
@@ -332,12 +384,12 @@ class MainActivity : ComponentActivity() {
                 println("Attempting to add geofence at: $addressText")
                 try{
                     var addressList = geocoder.getFromLocationName(addressText, 1)
-                    lat = addressList[0].latitude
-                    long = addressList[0].longitude
+//                    lat = addressList[0].latitude
+//                    long = addressList[0].longitude
                     GeofenceRepo.addGeofence(addressList[0].latitude, addressList[0].longitude, 1)
 //                    addGeofence(geoFencePendingIntent, notificationManager, lat, long, 1
 //                    )
-                    msg = "Geofence added at: $addressText"
+//                    msg = "Geofence added at: $addressText"
                 }catch(e:Exception)
                 {
                     Log.e("Error", "Failed to translate input into address")
@@ -348,11 +400,37 @@ class MainActivity : ComponentActivity() {
                 Text("Add geofence at address location")
             })
 
-
+            makeSliderWithLabels()
 //           displayLatLong(GeofenceRepo.lastLat, GeofenceRepo.lastLong)
 //            Text(text = (msg))
 
         }
+    }
+
+    @Composable
+    fun makeSliderWithLabels()
+    {
+        var distance:Float by remember{ mutableStateOf(100f)}
+        Column() {
+            Row() {
+                Text("50m")
+                Spacer(modifier = Modifier.size(maxOf(0f,((distance-125)*.50f)).dp, 10.dp))
+                Text(""+(distance-distance%25).toInt()+"m")
+            }
+
+            Slider(value = distance,
+                onValueChange = {distance = it},
+                steps = 9,
+                colors = SliderDefaults.colors(),
+                modifier = Modifier.fillMaxWidth(.60f),
+                valueRange = 50f..500f,
+                onValueChangeFinished = {
+                    GeofenceRepo.geofenceDistance = distance
+                    Log.e("Geofence", "Geofence Distance set to ${GeofenceRepo.geofenceDistance}")
+                }
+            )
+        }
+
     }
 
 
@@ -425,6 +503,12 @@ class MainActivity : ComponentActivity() {
 //        mLocationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
 //        return mLocationRequest
 //    }
+
+
+
+
+
+
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun askForPermissions():Boolean

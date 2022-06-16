@@ -21,6 +21,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -33,10 +34,14 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.substring
 import androidx.compose.ui.unit.*
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import com.example.wanderingelder.SettingsScreen.mActivity
 import com.example.wanderingelder.SettingsScreen.phone_number
 import com.example.wanderingelder.SettingsScreen.sharedPreferences
 import com.example.wanderingelder.ui.theme.WanderingElderTheme
@@ -50,12 +55,14 @@ import kotlin.collections.ArrayList
 object SettingsScreen {
     lateinit var sharedPreferences: SharedPreferences
     var phone_number:String = ""
+    lateinit var mActivity:MainActivity
 
 }
 
 @Composable
-fun launchSettingsScreen(context:Context)
+fun launchSettingsScreen(context:Context, activity: MainActivity)
 {
+    SettingsScreen.mActivity=activity
     sharedPreferences =context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
     phone_number = sharedPreferences.getString("target_phone_number", "")?:""
 
@@ -64,26 +71,58 @@ fun launchSettingsScreen(context:Context)
     }
 Column(){
     TextField(value = text,
-        onValueChange = {
-            text = it
+        onValueChange = { it ->
+            if(text.length<11)
+                text = it.filter { it.isDigit() }
 
+//            else
+//                text
         },
         label = { Text("Enter phone number \"xxxxxxxxxx\n (no spaces or dashes) " +
                 "of the person you would like to receive text messages", color = Color.Black) },
         modifier = Modifier
             .fillMaxWidth()
             .absolutePadding(10.dp, 10.dp, 10.dp, 10.dp),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        visualTransformation = MaskTransform()
     )
-    Row(horizontalArrangement = Arrangement.Center)
+    Column( modifier = Modifier
+        .fillMaxSize(),
+        horizontalAlignment=Alignment.CenterHorizontally)
     {
-        Button(content = {
-            Text(text = "Save")
-        },
-            onClick = {
-                sharedPreferences.edit().putString("target_phone_number", "+1$text")
-            })
+        Row(modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly)
+        {
+            Spacer(modifier = Modifier.fillMaxSize(.10f))
+            Button(content = {
+                Text(text = "Save")
+            },
+                onClick = {
+                    if (!text.isNullOrEmpty() &&text.length == 10)
+                    {
+                        mActivity.showMsg("Saved phone number : +1${text.substring(0,2)+"-"+text.subSequence(3,6)+"-"+text.subSequence(7, text.length)}")
+                        sharedPreferences.edit().putString("target_phone_number", "+1$text")
+                    }
+                    else
+                        mActivity.showMsg("Invalid Phone Number")
+                }
+            )
+            Spacer(modifier = Modifier.fillMaxSize(.10f))
+            Button(content = {
+                Text(text = "Clear")
+            },
+                onClick = {
+                    text = ""
+                }
+            )
+            Spacer(modifier = Modifier.fillMaxSize(.10f))
+            Spacer(modifier = Modifier.fillMaxSize(.10f))
+
+        }
+
     }
 
 }
+
 
 }
