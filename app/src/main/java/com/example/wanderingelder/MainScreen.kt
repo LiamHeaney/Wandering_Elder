@@ -50,5 +50,14 @@ object MainScreen {
 @Composable
 fun launchMainScreen()
 {
+    Column(horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
 
+        Button(onClick = {}, modifier = Modifier.background(Color.Transparent).fillMaxHeight(.8f))
+        {
+            Text("  Click here to connect  ")
+
+        }
+    }
 }

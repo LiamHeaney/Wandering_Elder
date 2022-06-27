@@ -66,11 +66,11 @@ object GeofenceRepo
     }
 
     @SuppressLint("MissingPermission")
-    fun addGeofenceAtCurrentLocation() {
+    fun addGeofenceAtCurrentLocation(name:String="Home") {
         fusedLocationProviderClient.lastLocation.apply {
             addOnSuccessListener { location ->
                 if (location != null) {
-                   addGeofence(location.latitude, location.longitude, 1)
+                   addGeofence(location.latitude, location.longitude, Geofence.GEOFENCE_TRANSITION_EXIT, name)
                 }
             }
         }
@@ -80,13 +80,13 @@ object GeofenceRepo
     fun addGeofence(
         lat: Double,
         long: Double,
-        type: Int
+        type: Int = Geofence.GEOFENCE_TRANSITION_EXIT,
+        name:String
     ) {
 
         println("Attempting to add geofence from REPO")
         lastLat = lat
         lastLong = long
-        var name = NameGen.getGeofenceName()
         fusedLocationProviderClient.lastLocation.apply {
             geoFenceList.add(
                 Geofence.Builder()
@@ -108,20 +108,20 @@ object GeofenceRepo
                 addOnSuccessListener {
 
                     println("Location(s) Added")
-                    mActivity.showMsg("Location Added")
-                    var builder = NotificationCompat.Builder(myContext, "1")
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
-                    .setContentTitle("GeoFence Added")
-                    .setContentText("$name  has been added at this location")
-                    .setPriority(NotificationCompat.PRIORITY_MAX)
-                    .setCategory(NotificationCompat.CATEGORY_ALARM)
-                    .setFullScreenIntent(
-                        PendingIntent.getActivity(
-                            myContext, 0,
-                            Intent(myContext, GeofenceBroadcastReceiver::class.java),
-                            PendingIntent.FLAG_UPDATE_CURRENT), true)
-
-                    notificationManager.notify(1, builder.build())
+                    mActivity.showMsg("$name Added")
+//                    var builder = NotificationCompat.Builder(myContext, "1")
+//                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+//                    .setContentTitle("GeoFence Added")
+//                    .setContentText("$name  has been added at this location")
+//                    .setPriority(NotificationCompat.PRIORITY_MAX)
+//                    .setCategory(NotificationCompat.CATEGORY_ALARM)
+//                    .setFullScreenIntent(
+//                        PendingIntent.getActivity(
+//                            myContext, 0,
+//                            Intent(myContext, GeofenceBroadcastReceiver::class.java),
+//                            PendingIntent.FLAG_UPDATE_CURRENT), true)
+//
+//                    notificationManager.notify(1, builder.build())
                 }
                 addOnFailureListener {
                     println("Error. Location failed to add")

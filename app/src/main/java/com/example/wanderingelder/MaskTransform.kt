@@ -23,7 +23,7 @@ class MaskTransform(): VisualTransformation
         val numberOffsetTranslator = object : OffsetMapping {
             override fun originalToTransformed(offset: Int): Int {
 //                Log.e("Offset", ""+offset)
-                if (offset <= 2) return offset
+                if (offset <=2) return offset
                 if (offset <= 5) return offset+1
                 if (offset<= 10) return offset+2
 

@@ -87,8 +87,8 @@ class MainActivity : ComponentActivity() {
 
         myGeoFencePendingIntent = PendingIntent.getBroadcast(this,
         0,
-        Intent(this, GeofenceBroadcastReceiver::class.java,),
-        PendingIntent.FLAG_UPDATE_CURRENT)
+            Intent(this, GeofenceBroadcastReceiver::class.java,),
+            PendingIntent.FLAG_UPDATE_CURRENT)
 
         setContent {
             WanderingElderTheme {
@@ -168,7 +168,9 @@ class MainActivity : ComponentActivity() {
         }
         else
         {
-            Spacer(modifier = Modifier.size(1.dp, 72.dp).fillMaxWidth())
+            Spacer(modifier = Modifier
+                .size(1.dp, 72.dp)
+                .fillMaxWidth())
         }
        
                 
@@ -230,7 +232,7 @@ class MainActivity : ComponentActivity() {
         HorizontalPager(state = pagerState) {
                 page ->
             when (page) {
-                0 -> TabContentScreen(content = "Welcome to "+tabsList[0].first)
+                0 -> launchMainScreen()
                 1 -> addGeofenceScreen()
                 2 -> launchSettingsScreen(this@MainActivity,this@MainActivity)
             // TabContentScreen(content = "Welcome to "+tabsList[2].first)
@@ -264,6 +266,16 @@ class MainActivity : ComponentActivity() {
 //        }
 
 
+//        Row()
+//        {
+//            Column(horizontalAlignment = Alignment.CenterHorizontally,
+//                verticalArrangement = Arrangement.Center){
+//                Spacer(modifier = Modifier.size(40.dp))
+//                Text("Address:", textAlign = TextAlign.Center)
+//            }
+
+
+//        }
         Column(
         modifier = Modifier
             .fillMaxSize()
@@ -272,14 +284,25 @@ class MainActivity : ComponentActivity() {
         verticalArrangement = Arrangement.Center
 
         ) {
-            Button(modifier = Modifier.size(250.dp),
+            var markerName by remember {
+            mutableStateOf("Home")
+            }
+            TextField(
+                    value = markerName, onValueChange = { markerName = it
+                    },
+                    label = { Text("Name Your Marker", color = Color.Black) },
+                    modifier = Modifier
+                    .fillMaxWidth()
+                    .absolutePadding(10.dp, 10.dp, 10.dp, 10.dp),
+                    )
+            Button(modifier = Modifier.size(150.dp),
                 shape = CircleShape,
                 colors = ButtonDefaults.textButtonColors(backgroundColor = Color.Red,
                     contentColor = Color.White),
                 onClick = { println("Adding Current Location")
                     Log.e("Button", "Button Clicked")
 
-                    GeofenceRepo.addGeofenceAtCurrentLocation()
+                    GeofenceRepo.addGeofenceAtCurrentLocation(markerName)
 //                    fusedLocationProviderClient.lastLocation.apply {
 //                        addOnSuccessListener { location ->
 //                            if (location != null) {
@@ -338,7 +361,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     )
-                    Canvas(modifier = Modifier.absoluteOffset(x = (-80).dp, y = 20.dp),
+                    Canvas(modifier = Modifier.absoluteOffset(x = (-60).dp, y = 20.dp),
                         onDraw = {
                             drawIntoCanvas {
                                 it.nativeCanvas.drawText(
@@ -386,12 +409,13 @@ class MainActivity : ComponentActivity() {
                     var addressList = geocoder.getFromLocationName(addressText, 1)
 //                    lat = addressList[0].latitude
 //                    long = addressList[0].longitude
-                    GeofenceRepo.addGeofence(addressList[0].latitude, addressList[0].longitude, 1)
+                    GeofenceRepo.addGeofence(addressList[0].latitude, addressList[0].longitude, Geofence.GEOFENCE_TRANSITION_EXIT,markerName)
 //                    addGeofence(geoFencePendingIntent, notificationManager, lat, long, 1
 //                    )
-//                    msg = "Geofence added at: $addressText"
+//                    showMsg("Geofence added at: $addressText")
                 }catch(e:Exception)
                 {
+                    showMsg("Failed to translate input into address")
                     Log.e("Error", "Failed to translate input into address")
                 }
 
