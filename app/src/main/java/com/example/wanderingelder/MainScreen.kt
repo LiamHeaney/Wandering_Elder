@@ -36,9 +36,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import com.example.wanderingelder.GeofenceRepo.dataSource
+import com.example.wanderingelder.database.MarkersDatabase
 import com.example.wanderingelder.ui.theme.WanderingElderTheme
 import com.google.accompanist.pager.*
 import com.google.android.gms.location.*
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.ArrayList
@@ -50,13 +53,15 @@ object MainScreen {
 @Composable
 fun launchMainScreen()
 {
+
     Column(horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
 
-        Button(onClick = {}, modifier = Modifier.background(Color.Transparent).fillMaxHeight(.8f))
+        Button(onClick = {
+            GlobalScope.launch {dataSource.dao.clearDatabase()  }}, modifier = Modifier.background(Color.Transparent).fillMaxHeight(.8f))
         {
-            Text("  Click here to connect  ")
+            Text("  Click here to Clear Database  ")
 
         }
     }
