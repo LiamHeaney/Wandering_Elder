@@ -1,4 +1,4 @@
-package com.example.wanderingelder
+package com.example.wanderingelder.model
 
 
 import android.annotation.SuppressLint
@@ -12,12 +12,14 @@ import android.content.SharedPreferences
 import android.location.Geocoder
 import android.os.Build
 import androidx.annotation.RequiresApi
+import com.example.wanderingelder.MainActivity
 import com.example.wanderingelder.database.Marker
 import com.example.wanderingelder.database.MarkersDatabase
 import com.google.android.gms.location.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.time.LocalDateTime
 import java.util.*
 import kotlin.collections.ArrayList
@@ -28,7 +30,7 @@ import kotlin.math.abs
 object GeofenceRepo
 {
 
-
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
     var geofenceDistance:Float = 100f
     var lastLat:Double = 0.0
     var lastLong:Double = 0.0
@@ -43,7 +45,7 @@ object GeofenceRepo
     lateinit var myContext: Context
     lateinit var myGeoFencePendingIntent: PendingIntent
     private var geofenceList = ArrayList<Geofence>()
-    private lateinit var mActivity:MainActivity
+    private lateinit var mActivity: MainActivity
     lateinit var dataSource:MarkersDatabase
     lateinit var sharedPreferences: SharedPreferences
 
@@ -51,9 +53,9 @@ object GeofenceRepo
     fun initialize(context: Context, activity: MainActivity)
     {
         sharedPreferences =context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        dataSource= MarkersDatabase.getInstance(context)
-        mActivity=activity
-        myContext=context
+        dataSource = MarkersDatabase.getInstance(context)
+        mActivity =activity
+        myContext =context
         geocoder = Geocoder(context)
         Locale.getDefault()
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
@@ -97,7 +99,8 @@ object GeofenceRepo
         long: Double,
         type: Int = Geofence.GEOFENCE_TRANSITION_EXIT,
         name:String,
-        silent:Boolean = false
+        silent:Boolean = false,
+        distance:Float = geofenceDistance
     ) {
 
         println("Attempting to add geofence from REPO")
@@ -110,6 +113,14 @@ object GeofenceRepo
                 {
                     println("Location Failed to Add")
                     mActivity.showMsg("Failure! Location Too Close to another Location!")
+                }
+
+            }
+            else if(nameConflict(name)){
+                if(!silent)
+                {
+                    println("Location Failed to Add")
+                    mActivity.showMsg("Failure! Identifier already in use. Please rename the Marker")
                 }
 
             }
@@ -166,9 +177,9 @@ object GeofenceRepo
     @RequiresApi(Build.VERSION_CODES.O)
     private suspend fun addToDatabase(lat:Double, long:Double, name:String)
     {
-        var conflict = locConflict(lat,long)
+        var conflict = locConflict(lat,long) || nameConflict(name)
         println("Conflict?: $conflict")
-        println("Database Size: "+dataSource.dao.getSize()+1)
+        println("Database Size: "+ dataSource.dao.getSize()+1)
         if(!conflict && dataSource.dao.getSize()<=100)
             dataSource.dao.insert(
                 Marker(
@@ -178,7 +189,8 @@ object GeofenceRepo
                     longitude=long,
                     creationDate = LocalDateTime.now().toString(),
                     name = name,
-                    type = Geofence.GEOFENCE_TRANSITION_EXIT
+                    type = Geofence.GEOFENCE_TRANSITION_EXIT,
+                    size = geofenceDistance
                 )
             )
         println("databaseStuff")
@@ -201,7 +213,8 @@ object GeofenceRepo
                     long =x.longitude,
                     type = Geofence.GEOFENCE_TRANSITION_EXIT,
                     name = x.name,
-                loading)
+                loading
+                )
                 println("Added to Fences: $x")
             }
             else
@@ -215,6 +228,14 @@ object GeofenceRepo
         var conflict = false
         for(x in dataSource.dao.getAllMarkers())
             if(abs((x.longitude-long)) <1 && abs((x.latitude-lat)) <1)
+                return true
+        return false
+    }
+    private suspend fun nameConflict(name:String):Boolean
+    {
+        var conflict = false
+        for(x in dataSource.dao.getAllMarkers())
+            if(name == x.name)
                 return true
         return false
     }

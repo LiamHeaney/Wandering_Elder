@@ -1,27 +1,9 @@
-package com.example.wanderingelder
+package com.example.wanderingelder.SettingScreen
 
-import android.Manifest.permission.*
-import android.annotation.SuppressLint
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.PackageManager.PERMISSION_GRANTED
-import android.location.Geocoder
-import android.os.Build
-import android.os.Bundle
-import android.util.Log
-import android.widget.EditText
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -31,34 +13,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.substring
 import androidx.compose.ui.unit.*
-import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import com.example.wanderingelder.SettingsScreen.mActivity
-import com.example.wanderingelder.SettingsScreen.phone_number
-import com.example.wanderingelder.SettingsScreen.sharedPreferences
-import com.example.wanderingelder.ui.theme.WanderingElderTheme
-import com.google.accompanist.pager.*
-import com.google.android.gms.location.*
-import kotlinx.coroutines.launch
-import java.util.*
-import kotlin.collections.ArrayList
+import com.example.wanderingelder.MainActivity
+import com.example.wanderingelder.SettingScreen.SettingsScreen.mActivity
+import com.example.wanderingelder.SettingScreen.SettingsScreen.phone_number
+import com.example.wanderingelder.SettingScreen.SettingsScreen.sharedPreferences
 
 
 object SettingsScreen {
     lateinit var sharedPreferences: SharedPreferences
     var phone_number:String = "0000000000"
-    lateinit var mActivity:MainActivity
+    lateinit var mActivity: MainActivity
 
     var hours:List<String> = listOf("0:00","1:00","2:00","3:00",
         "4:00","5:00","6:00","7:00",

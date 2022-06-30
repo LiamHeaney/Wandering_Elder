@@ -23,6 +23,9 @@ interface Dao {
     @Query("SELECT * FROM MARKERS_TABLE ORDER BY name DESC")
     fun getAllMarkers():List<Marker>
 
+    @Query("SELECT * FROM MARKERS_TABLE ORDER BY name DESC")
+    fun getLiveDataMarkers():LiveData<List<Marker>>
+
     @Query("SELECT " +
             "CASE WHEN EXISTS(" +
                 "SELECT * FROM MARKERS_TABLE " +
@@ -37,4 +40,18 @@ interface Dao {
 
     @Query("SELECT COUNT(*) FROM MARKERS_TABLE")
     fun getSize():Int
+
+    @Query("DELETE FROM MARKERS_TABLE WHERE :name=name")
+    fun delete(name:String)
+
+    @Query("SELECT " +
+            "CASE WHEN EXISTS(" +
+                "SELECT * FROM MARKERS_TABLE " +
+                "WHERE " +
+                "name = :name " +
+            ") "+
+            "THEN 'TRUE' " +
+            "ELSE 'FALSE' " +
+            "END")
+    fun checkIfNameAlreadyPresent(name:String):Boolean
 }

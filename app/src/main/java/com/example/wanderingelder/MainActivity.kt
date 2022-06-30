@@ -20,7 +20,6 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -38,16 +37,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
+import com.example.wanderingelder.SettingScreen.launchSettingsScreen
+import com.example.wanderingelder.geofences.screen.launchGeofencesScreen
+import com.example.wanderingelder.model.GeofenceBroadcastReceiver
+import com.example.wanderingelder.model.GeofenceRepo
+import com.example.wanderingelder.model.NameGen
 import com.example.wanderingelder.ui.theme.WanderingElderTheme
 import com.google.accompanist.pager.*
 import com.google.android.gms.location.*
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.math.ceil
 
 
 class MainActivity : ComponentActivity() {
@@ -97,6 +97,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    @RequiresApi(Build.VERSION_CODES.O)
     @Preview
     @Composable
     fun preview()
@@ -125,6 +126,7 @@ class MainActivity : ComponentActivity() {
 //        Text(text = "Latitude: "+GeofenceRepo.lastLat)
 //        Text(text = "Longitude: "+GeofenceRepo.lastLong)
 //    }
+    @RequiresApi(Build.VERSION_CODES.O)
     @OptIn(ExperimentalUnitApi::class, ExperimentalPagerApi::class)
     @Composable
     fun TabLayout() {
@@ -221,6 +223,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    @RequiresApi(Build.VERSION_CODES.O)
     @ExperimentalPagerApi
     @Composable
     fun TabsContent(pagerState: PagerState) {
@@ -232,50 +235,32 @@ class MainActivity : ComponentActivity() {
         HorizontalPager(state = pagerState) {
                 page ->
             when (page) {
-                0 -> launchMainScreen()
+                0 -> launchGeofencesScreen()
                 1 -> addGeofenceScreen()
                 2 -> launchSettingsScreen(this@MainActivity,this@MainActivity)
             // TabContentScreen(content = "Welcome to "+tabsList[2].first)
             }
         }
     }
-    @Composable
-    fun TabContentScreen(content: String) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = content,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-    }
+//    @Composable
+//    fun TabContentScreen(content: String) {
+//        Column(
+//            modifier = Modifier.fillMaxSize(),
+//            horizontalAlignment = Alignment.CenterHorizontally,
+//            verticalArrangement = Arrangement.Center
+//        ) {
+//            Text(
+//                text = content,
+//                fontWeight = FontWeight.Bold,
+//            )
+//        }
+//    }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("MissingPermission")
     @Composable
     fun addGeofenceScreen()
     {
-//        var msg by remember{mutableStateOf("no Message")}
-//        var lat by remember {mutableStateOf(0.0)}
-//        var long by remember {mutableStateOf(0.0)}
-//        val geoFencePendingIntent:PendingIntent by lazy {
-//            val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
-//            PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
-//        }
-
-
-//        Row()
-//        {
-//            Column(horizontalAlignment = Alignment.CenterHorizontally,
-//                verticalArrangement = Arrangement.Center){
-//                Spacer(modifier = Modifier.size(40.dp))
-//                Text("Address:", textAlign = TextAlign.Center)
-//            }
-
-
-//        }
         Column(
         modifier = Modifier
             .fillMaxSize()
@@ -319,7 +304,7 @@ class MainActivity : ComponentActivity() {
 
 //                    msg = "Geofence added"
 
-                    Log.e("Navigation", "Attempting navigation to MainScreen")
+//                    Log.e("Navigation", "Attempting navigation to MainScreen")
 //                    navController.navigate("MainScreen")
 
                 },content = {

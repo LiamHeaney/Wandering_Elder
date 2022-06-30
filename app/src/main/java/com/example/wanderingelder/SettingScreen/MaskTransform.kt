@@ -1,6 +1,5 @@
-package com.example.wanderingelder
+package com.example.wanderingelder.SettingScreen
 
-import android.util.Log
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText

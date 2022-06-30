@@ -27,6 +27,8 @@ data class Marker @RequiresApi(26) constructor(
     var name:String = "DFLT",
     @ColumnInfo(name = "Type")
     var type:Int = Geofence.GEOFENCE_TRANSITION_EXIT,
+    @ColumnInfo(name = "Size")
+    var size:Float = 100f,
     @PrimaryKey(autoGenerate = true)
     var id:Int = 0
 )

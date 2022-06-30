@@ -1,4 +1,4 @@
-package com.example.wanderingelder
+package com.example.wanderingelder.screen.structure
 
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.Composable

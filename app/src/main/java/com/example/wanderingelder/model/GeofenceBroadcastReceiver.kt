@@ -1,4 +1,4 @@
-package com.example.wanderingelder
+package com.example.wanderingelder.model
 
 import android.app.*
 import android.content.BroadcastReceiver
@@ -6,17 +6,19 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
-import android.preference.PreferenceManager
 import android.telephony.SmsManager
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import com.example.wanderingelder.GeofenceRepo.notificationManager
+import com.example.wanderingelder.R
+import com.example.wanderingelder.model.GeofenceRepo.dataSource
+import com.example.wanderingelder.model.GeofenceRepo.notificationManager
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
-import java.time.LocalDate
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
 class GeofenceBroadcastReceiver : BroadcastReceiver()
@@ -45,6 +47,22 @@ class GeofenceBroadcastReceiver : BroadcastReceiver()
             println(errorMsg)
             return
         }
+        CoroutineScope(Dispatchers.Default).launch {
+            geoFencingEvent?.triggeringGeofences?.get(0)?.requestId?.let {
+                var marker = dataSource.dao.get(it)
+
+                if(marker!=null)
+                {
+                    var startTime = marker.startTime.substring(0, 2).toInt()
+                    var endTime = marker.endTime.substring(0, 2).toInt()
+                }
+
+
+
+
+            }
+        }
+
         println("Time is: "+LocalDateTime.now().hour)
         var startTime = sharedPreferences.getString("startHour", "0:00")?.substring(0, 1)?.toInt()?:0
         var endTime = sharedPreferences.getString("endHour", "0:00")?.substring(0, 1)?.toInt()?:0
