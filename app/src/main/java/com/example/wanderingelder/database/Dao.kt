@@ -20,10 +20,10 @@ interface Dao {
     @Query("DELETE FROM MARKERS_TABLE")
     suspend fun clearDatabase()
 
-    @Query("SELECT * FROM MARKERS_TABLE ORDER BY name DESC")
+    @Query("SELECT * FROM MARKERS_TABLE ORDER BY id DESC")
     fun getAllMarkers():List<Marker>
 
-    @Query("SELECT * FROM MARKERS_TABLE ORDER BY name DESC")
+    @Query("SELECT * FROM MARKERS_TABLE ORDER BY id DESC")
     fun getLiveDataMarkers():LiveData<List<Marker>>
 
     @Query("SELECT " +

@@ -21,6 +21,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -31,8 +33,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
@@ -45,6 +49,8 @@ import com.example.wanderingelder.model.NameGen
 import com.example.wanderingelder.ui.theme.WanderingElderTheme
 import com.google.accompanist.pager.*
 import com.google.android.gms.location.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.util.*
@@ -112,7 +118,7 @@ class MainActivity : ComponentActivity() {
 
 
     fun showMsg(s:String){
-        GlobalScope.launch{
+        CoroutineScope(Dispatchers.Default).launch {
             state.showSnackbar(s)
         }
     }
@@ -263,12 +269,13 @@ class MainActivity : ComponentActivity() {
     {
         Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth().fillMaxHeight()
             .background(Color.Gray),
         horizontalAlignment=Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+//        verticalArrangement = Arrangement.Center
 
         ) {
+            val focusManager = LocalFocusManager.current
             var markerName by remember {
             mutableStateOf("Home")
             }
@@ -279,7 +286,14 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier
                     .fillMaxWidth()
                     .absolutePadding(10.dp, 10.dp, 10.dp, 10.dp),
-                    )
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone ={
+                        focusManager.clearFocus()
+                    }
+                )
+            )
+
             Button(modifier = Modifier.size(150.dp),
                 shape = CircleShape,
                 colors = ButtonDefaults.textButtonColors(backgroundColor = Color.Red,
@@ -311,17 +325,17 @@ class MainActivity : ComponentActivity() {
                     val textPaintStroke = Paint().asFrameworkPaint().apply {
                         isAntiAlias = true
                         style = android.graphics.Paint.Style.STROKE
-                        textSize = 30f
+                        textSize = 20f
                         color = android.graphics.Color.BLACK
-                        strokeWidth = 12f
-                        strokeMiter= 10f
+                        strokeWidth = 6f
+                        strokeMiter= 5f
                         strokeJoin = android.graphics.Paint.Join.ROUND
                     }
 
                     val textPaint = Paint().asFrameworkPaint().apply {
                         isAntiAlias = true
                         style = android.graphics.Paint.Style.FILL
-                        textSize = 30f
+                        textSize = 20f
                         color = android.graphics.Color.WHITE
                     }
 
@@ -376,7 +390,7 @@ class MainActivity : ComponentActivity() {
                     Spacer(modifier = Modifier.size(40.dp))
                     Text("Address:", textAlign = TextAlign.Center)
                 }
-
+                val focusManager = LocalFocusManager.current
                 TextField(
                     value = text, onValueChange = { text = it
                                                   addressText = text},
@@ -384,6 +398,13 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .absolutePadding(10.dp, 10.dp, 10.dp, 10.dp),
+                   keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone ={
+                            focusManager.clearFocus()
+                        }
+                    )
+
 
                 )
             }

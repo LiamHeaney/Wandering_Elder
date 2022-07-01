@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -14,7 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.*
 import com.example.wanderingelder.MainActivity
@@ -67,7 +70,7 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
 
 
         }
-
+        val focusManager = LocalFocusManager.current
         TextField(value = text,
             onValueChange = { it ->
                 if(text.length<11)
@@ -79,8 +82,24 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
             modifier = Modifier
                 .fillMaxWidth()
                 .absolutePadding(10.dp, 10.dp, 10.dp, 10.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            visualTransformation = MaskTransform()
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+            visualTransformation = MaskTransform(),
+            keyboardActions = KeyboardActions(
+                onDone={
+                    if (!text.isNullOrEmpty() && text.length>=10 && text!="0000000000")
+                    {
+                        if(text.length>10) text = text.substring(0, 10)
+                        mActivity.showMsg("Saved phone number : +1-${text.substring(0,3)+"-"+text.subSequence(3,6)+"-"+text.subSequence(6, text.length)}")
+                        sharedPreferences.edit().putString("target_phone_number", "$text").apply()
+                        phone_number = text
+                        phoneText = text
+                        focusManager.clearFocus()
+                    }
+                    else
+                        mActivity.showMsg("Invalid Phone Number")
+
+                }
+            )
         )
         Column( modifier = Modifier
             .fillMaxSize(),
@@ -189,7 +208,7 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
                         Icon(startIconTOD,"contentDescription",
                             Modifier.clickable { expandedStartTOD = !expandedStartTOD })
                     },
-                    textStyle = TextStyle(fontSize = 3.em),
+                    textStyle = TextStyle(fontSize = 2.em),
                     readOnly = true
                 )
                 DropdownMenu(
@@ -271,7 +290,7 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
                         Icon(endIconTOD,"contentDescription",
                             Modifier.clickable { expandedEndTOD = !expandedEndTOD })
                     },
-                    textStyle = TextStyle(fontSize = 3.em),
+                    textStyle = TextStyle(fontSize = 2.em),
                     readOnly = true
                 )
                 DropdownMenu(

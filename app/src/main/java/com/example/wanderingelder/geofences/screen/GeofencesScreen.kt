@@ -23,7 +23,10 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.*
 import com.google.android.gms.location.Geofence
 
 
@@ -66,6 +69,7 @@ fun geofencesList(viewModel: GeofencesScreenViewModel)
         {
             Text("  Click here to Clear Database  ")
         }
+        Spacer(modifier = Modifier.fillMaxHeight(0.05f))
         geofencesColumn(geofences = allGeofences, viewModel = viewModel)
     }
 
@@ -73,33 +77,53 @@ fun geofencesList(viewModel: GeofencesScreenViewModel)
 @Composable
 fun geofencesColumn(geofences:List<Marker>, viewModel: GeofencesScreenViewModel)
 {
-    LazyColumn(){
-        items(geofences){
-            item->
-            geofenceItem(marker = item, viewModel)
+        LazyColumn(contentPadding = PaddingValues(4.dp)){
+            items(geofences){
+                    item->
+                geofenceItem(marker = item, viewModel)
+            }
+
         }
 
-    }
 }
+@OptIn(ExperimentalUnitApi::class)
 @Composable
 fun geofenceItem(marker: Marker, viewModel: GeofencesScreenViewModel)
 {
-    Surface(border = BorderStroke(2.dp, Color.Black), modifier = Modifier.background(Color.Blue, RectangleShape)){
+    Surface(border = BorderStroke(2.dp, Color.LightGray), modifier = Modifier.background(Color.Blue, RectangleShape)){
         Row(modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly) {
-            Surface(modifier = Modifier.fillMaxWidth(0.8f)) {
-                Text("${marker.name}\n" +
-                        "Latitude: ${String.format("%.3f",marker.latitude)}\t\t " +
-                        "Longitude: ${String.format("%.3f",marker.longitude)}")
-            }
-            Surface(modifier = Modifier.fillMaxWidth(0.4f)) {
-                Button(onClick = {
-                    viewModel.repo.deleteMarker(marker.name)
+            Surface(modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .background(color = Color.Black)) {
+                Column(){
+                    Spacer(modifier = Modifier.size(5.dp))
+                    Text("${marker.name}\n" +
+                            "Latitude: ${String.format("%.2f",marker.latitude)}\t\t " +
+                            "Longitude: ${String.format("%.2f",marker.longitude)}")
                 }
-                ) {
-                    Text(text = "X", color =Color.Red)
+                }
+               
+            Surface(modifier = Modifier
+                .fillMaxWidth(0.3f)
+                .background(color = Color.Black)) {
+                Button(
+                    onClick = {
+                        viewModel.repo.deleteMarker(marker.name)
+                    },
+                    content = {
 
-                }
+                            Text(
+                                text = "X",
+                                color = Color.Red,
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 30.sp
+                            )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+
+                    )
             }
 
         }
