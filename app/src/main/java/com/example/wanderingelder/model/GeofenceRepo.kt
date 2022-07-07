@@ -18,7 +18,7 @@ import com.example.wanderingelder.database.MarkersDatabase
 import com.google.android.gms.location.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+//import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.util.*
@@ -32,27 +32,28 @@ object GeofenceRepo
 
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
     var geofenceDistance:Float = 100f
-    var lastLat:Double = 0.0
-    var lastLong:Double = 0.0
-    lateinit var  geofencingClient:GeofencingClient
-    var geoFenceList : MutableList<Geofence> = ArrayList<Geofence>()
-    lateinit var fusedLocationProviderClient: FusedLocationProviderClient
-    var addressText:String = ""
-    lateinit var geocoder : Geocoder
+    private var lastLat:Double = 0.0
+    private var lastLong:Double = 0.0
+    private lateinit var  geofencingClient:GeofencingClient
+    private var geoFenceList : MutableList<Geofence> = ArrayList()
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+//    var addressText:String = ""
+    private lateinit var geocoder : Geocoder
     lateinit var notificationManager:NotificationManager
 
-    var loading = true
-    lateinit var myContext: Context
-    lateinit var myGeoFencePendingIntent: PendingIntent
-    private var geofenceList = ArrayList<Geofence>()
+    private var loading = true
+    private lateinit var myContext: Context
+    private lateinit var myGeoFencePendingIntent: PendingIntent
+//    private var geofenceList = ArrayList<Geofence>()
     private lateinit var mActivity: MainActivity
     lateinit var dataSource:MarkersDatabase
-    lateinit var sharedPreferences: SharedPreferences
+    private lateinit var sharedPreferences: SharedPreferences
 
+    @SuppressLint("UnspecifiedImmutableFlag")
     @RequiresApi(Build.VERSION_CODES.O)
     fun initialize(context: Context, activity: MainActivity)
     {
-        sharedPreferences =context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        sharedPreferences =context.getSharedPreferences("prefs", MODE_PRIVATE)
         dataSource = MarkersDatabase.getInstance(context)
         mActivity =activity
         myContext =context
@@ -71,10 +72,10 @@ object GeofenceRepo
 
         myGeoFencePendingIntent = PendingIntent.getBroadcast(context,
             0,
-            Intent(context, GeofenceBroadcastReceiver::class.java,),
+            Intent(context, GeofenceBroadcastReceiver::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT)
 
-        GlobalScope.launch {
+        coroutineScope.launch {
 //            dataSource.dao.clearDatabase()
             loadGeofencesFromDB()
         }
@@ -100,13 +101,13 @@ object GeofenceRepo
         type: Int = Geofence.GEOFENCE_TRANSITION_EXIT,
         name:String,
         silent:Boolean = false,
-        distance:Float = geofenceDistance
+//        distance:Float = geofenceDistance
     ) {
 
         println("Attempting to add geofence from REPO")
         lastLat = lat
         lastLong = long
-        GlobalScope.launch {
+        CoroutineScope(Dispatchers.Default).launch {
 //            if(true){
             if(locConflict(lat, long)){
                 if(!silent)
@@ -126,7 +127,7 @@ object GeofenceRepo
             }
             else{
                 fusedLocationProviderClient.lastLocation.apply {
-                    var geofence = Geofence.Builder()
+                    val geofence = Geofence.Builder()
                         .setRequestId(name)
                         .setCircularRegion(
                             lat,
@@ -142,7 +143,7 @@ object GeofenceRepo
                         myGeoFencePendingIntent
                     ).run {
                         addOnSuccessListener {
-                            GlobalScope.launch {
+                            coroutineScope.launch {
                                 addToDatabase(lat, long, name)
                             }
 
@@ -177,7 +178,7 @@ object GeofenceRepo
     @RequiresApi(Build.VERSION_CODES.O)
     private suspend fun addToDatabase(lat:Double, long:Double, name:String)
     {
-        var conflict = locConflict(lat,long) || nameConflict(name)
+        val conflict = locConflict(lat,long) || nameConflict(name)
         println("Conflict?: $conflict")
         println("Database Size: "+ dataSource.dao.getSize()+1)
         if(!conflict && dataSource.dao.getSize()<=100)
@@ -194,16 +195,13 @@ object GeofenceRepo
                 )
             )
         println("databaseStuff")
-        var markers = dataSource.dao.getAllMarkers()
-        if (markers != null) {
-            for (x in markers)
-                println(x)
-
-        }
+        val markers = dataSource.dao.getAllMarkers()
+        for (x in markers)
+            println(x)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private suspend fun loadGeofencesFromDB()
+    private fun loadGeofencesFromDB()
     {
         for((count, x) in dataSource.dao.getAllMarkers().withIndex())
         {
@@ -223,17 +221,17 @@ object GeofenceRepo
         }
         loading = false
     }
-    private suspend fun locConflict(lat:Double, long: Double):Boolean
+    private fun locConflict(lat:Double, long: Double):Boolean
     {
-        var conflict = false
+//        var conflict = false
         for(x in dataSource.dao.getAllMarkers())
             if(abs((x.longitude-long)) <1 && abs((x.latitude-lat)) <1)
                 return true
         return false
     }
-    private suspend fun nameConflict(name:String):Boolean
+    private fun nameConflict(name:String):Boolean
     {
-        var conflict = false
+//        var conflict = false
         for(x in dataSource.dao.getAllMarkers())
             if(name == x.name)
                 return true

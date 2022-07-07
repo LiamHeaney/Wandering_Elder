@@ -12,7 +12,8 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.location.Geocoder
 import android.os.Build
 import android.os.Bundle
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceManager
+//import android.preference.PreferenceManager
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -38,20 +39,18 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.core.app.ActivityCompat
 import com.example.wanderingelder.SettingScreen.launchSettingsScreen
-import com.example.wanderingelder.geofences.screen.launchGeofencesScreen
+import com.example.wanderingelder.geofences.screen.LaunchGeofencesScreen
 import com.example.wanderingelder.model.GeofenceBroadcastReceiver
 import com.example.wanderingelder.model.GeofenceRepo
-import com.example.wanderingelder.model.NameGen
+//import com.example.wanderingelder.model.NameGen
 import com.example.wanderingelder.ui.theme.WanderingElderTheme
 import com.google.accompanist.pager.*
 import com.google.android.gms.location.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -72,10 +71,11 @@ class MainActivity : ComponentActivity() {
 
 //    var geofenceDistance:Float = 100f
 
-    @SuppressLint("NewApi", "MissingPermission")
+    @SuppressLint("NewApi", "MissingPermission", "UnspecifiedImmutableFlag")
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        @Suppress("ControlFlowWithEmptyBody")
         while(!askForPermissions()){}
         GeofenceRepo.initialize(this, this@MainActivity)
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
@@ -93,7 +93,7 @@ class MainActivity : ComponentActivity() {
 
         myGeoFencePendingIntent = PendingIntent.getBroadcast(this,
         0,
-            Intent(this, GeofenceBroadcastReceiver::class.java,),
+            Intent(this, GeofenceBroadcastReceiver::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT)
 
         setContent {
@@ -103,18 +103,19 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-    @RequiresApi(Build.VERSION_CODES.O)
-    @Preview
-    @Composable
-    fun preview()
-    {
-        setContent {
-            WanderingElderTheme {
-                TabLayout()
 
-            }
-        }
-    }
+//    @RequiresApi(Build.VERSION_CODES.O)
+//    @Preview
+//    @Composable
+//    fun Preview()
+//    {
+//        setContent {
+//            WanderingElderTheme {
+//                TabLayout()
+//
+//            }
+//        }
+//    }
 
 
     fun showMsg(s:String){
@@ -132,6 +133,7 @@ class MainActivity : ComponentActivity() {
 //        Text(text = "Latitude: "+GeofenceRepo.lastLat)
 //        Text(text = "Longitude: "+GeofenceRepo.lastLong)
 //    }
+    @Suppress("OPT_IN_IS_NOT_ENABLED")
     @RequiresApi(Build.VERSION_CODES.O)
     @OptIn(ExperimentalUnitApi::class, ExperimentalPagerApi::class)
     @Composable
@@ -162,13 +164,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
             Tabs(pagerState = pagerState)
-            spaceForSnackBar(state = state)
+            SpaceForSnackBar(state = state)
             TabsContent(pagerState = pagerState)
         }
     }
     
     @Composable
-    fun spaceForSnackBar(state: SnackbarHostState)
+    fun SpaceForSnackBar(state: SnackbarHostState)
     {
         if(state.currentSnackbarData?.message != null)
         {
@@ -207,7 +209,7 @@ class MainActivity : ComponentActivity() {
             backgroundColor = Color.LightGray,
             contentColor = Color.Black
         ) {
-            tabsList.forEachIndexed { index, value ->
+            tabsList.forEachIndexed { index, _ ->
                 Tab(
                     icon = {
                         Icon(imageVector = tabsList[index].second, contentDescription = null)
@@ -233,16 +235,16 @@ class MainActivity : ComponentActivity() {
     @ExperimentalPagerApi
     @Composable
     fun TabsContent(pagerState: PagerState) {
-        val tabsList = listOf(
-            "MainScreen" to Icons.Default.Home,
-            "Create a Marker" to Icons.Default.Add,
-            "Settings" to Icons.Default.Settings
-        )
+//        val tabsList = listOf(
+//            "MainScreen" to Icons.Default.Home,
+//            "Create a Marker" to Icons.Default.Add,
+//            "Settings" to Icons.Default.Settings
+//        )
         HorizontalPager(state = pagerState) {
                 page ->
             when (page) {
-                0 -> launchGeofencesScreen()
-                1 -> addGeofenceScreen()
+                0 -> LaunchGeofencesScreen()
+                1 -> AddGeofenceScreen()
                 2 -> launchSettingsScreen(this@MainActivity,this@MainActivity)
             // TabContentScreen(content = "Welcome to "+tabsList[2].first)
             }
@@ -265,7 +267,7 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("MissingPermission")
     @Composable
-    fun addGeofenceScreen()
+    fun AddGeofenceScreen()
     {
         Column(
         modifier = Modifier
@@ -390,7 +392,7 @@ class MainActivity : ComponentActivity() {
                     Spacer(modifier = Modifier.size(40.dp))
                     Text("Address:", textAlign = TextAlign.Center)
                 }
-                val focusManager = LocalFocusManager.current
+                @Suppress("NAME_SHADOWING") val focusManager = LocalFocusManager.current
                 TextField(
                     value = text, onValueChange = { text = it
                                                   addressText = text},
@@ -412,7 +414,7 @@ class MainActivity : ComponentActivity() {
             Button(onClick = {
                 println("Attempting to add geofence at: $addressText")
                 try{
-                    var addressList = geocoder.getFromLocationName(addressText, 1)
+                    val addressList = geocoder.getFromLocationName(addressText, 1)
 //                    lat = addressList[0].latitude
 //                    long = addressList[0].longitude
                     GeofenceRepo.addGeofence(addressList[0].latitude, addressList[0].longitude, Geofence.GEOFENCE_TRANSITION_EXIT,markerName)
@@ -430,7 +432,7 @@ class MainActivity : ComponentActivity() {
                 Text("Add geofence at address location")
             })
 
-            makeSliderWithLabels()
+            MakeSliderWithLabels()
 //           displayLatLong(GeofenceRepo.lastLat, GeofenceRepo.lastLong)
 //            Text(text = (msg))
 
@@ -438,7 +440,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun makeSliderWithLabels()
+    fun MakeSliderWithLabels()
     {
         var distance:Float by remember{ mutableStateOf(100f)}
         Column() {
@@ -572,9 +574,9 @@ class MainActivity : ComponentActivity() {
                 SEND_SMS),
                 0)
 
-            var coarse = ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION)== PERMISSION_GRANTED
-            var fine= ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION)== PERMISSION_GRANTED
-            var background = ActivityCompat.checkSelfPermission(this, ACCESS_BACKGROUND_LOCATION)== PERMISSION_GRANTED
+            val coarse = ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION)== PERMISSION_GRANTED
+            val fine= ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION)== PERMISSION_GRANTED
+            val background = ActivityCompat.checkSelfPermission(this, ACCESS_BACKGROUND_LOCATION)== PERMISSION_GRANTED
             println("Permissions:\nCoarse Location:"
                     +coarse+"\nFine Location: "+fine+"\nBackground: "+background)
         }
@@ -591,8 +593,8 @@ class MainActivity : ComponentActivity() {
         ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION)==PERMISSION_GRANTED
         )
     }
-    fun getNextLocation():String
-    {
-        return   NameGen.getGeofenceName()
-    }
+//    fun getNextLocation():String
+//    {
+//        return   NameGen.getGeofenceName()
+//    }
 }
