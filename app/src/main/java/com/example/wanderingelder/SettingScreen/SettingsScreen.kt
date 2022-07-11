@@ -60,25 +60,26 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
         )
     {
         Row() {
-            Text(text = "Current phone number:")
+            Text(text = "Current phone number:", color =  MaterialTheme.colors.onBackground)
 
 
             Text(text = "  +1-"+phoneText.substring(0, 3)+"-"+
                     phoneText.substring(3, 6)+"-"+
-                    phoneText.substring(6))
+                    phoneText.substring(6), color =  MaterialTheme.colors.onBackground)
 
 
 
         }
         val focusManager = LocalFocusManager.current
         TextField(value = text,
+            colors =  TextFieldDefaults.textFieldColors(textColor =  MaterialTheme.colors.onBackground),
             onValueChange = { it ->
                 if(text.length<11)
                     text = it.filter { it.isDigit() }
 
             },
             label = { Text("Enter phone number \"xxxxxxxxxx\n (no spaces or dashes) " +
-                    "of the person you would like to receive text messages", color = Color.Black) },
+                    "of the person you would like to receive text messages", color =  MaterialTheme.colors.onBackground) },
             modifier = Modifier
                 .fillMaxWidth()
                 .absolutePadding(10.dp, 10.dp, 10.dp, 10.dp),
@@ -86,11 +87,11 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
             visualTransformation = MaskTransform(),
             keyboardActions = KeyboardActions(
                 onDone={
-                    if (!text.isNullOrEmpty() && text.length>=10 && text!="0000000000")
+                    if (text.isNotEmpty() && text.length>=10 && text!="0000000000")
                     {
                         if(text.length>10) text = text.substring(0, 10)
                         mActivity.showMsg("Saved phone number : +1-${text.substring(0,3)+"-"+text.subSequence(3,6)+"-"+text.subSequence(6, text.length)}")
-                        sharedPreferences.edit().putString("target_phone_number", "$text").apply()
+                        sharedPreferences.edit().putString("target_phone_number", text).apply()
                         phone_number = text
                         phoneText = text
                         focusManager.clearFocus()
@@ -168,11 +169,12 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
             {
 
 
-                Text("Start Time:\t")
+                Text("Start Time:\t", color =  MaterialTheme.colors.onBackground)
 
                 OutlinedTextField(value = selectedStart,
                     onValueChange = { selectedStart = it },
-                    modifier = Modifier.fillMaxWidth(0.4f)
+                    modifier = Modifier
+                        .fillMaxWidth(0.4f)
                         .onGloballyPositioned { coordinates ->
                             startTextSize = coordinates.size.toSize()
                         },
@@ -181,11 +183,12 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
                         Icon(startIcon, "contentDescription",
                             Modifier.clickable { expandedStart = !expandedStart })
                     },
-                    readOnly = true
+                    readOnly = true,
+                    textStyle = TextStyle(color =  MaterialTheme.colors.onBackground)
                 )
                 DropdownMenu(
                     expanded = expandedStart,
-                    onDismissRequest = { expandedStart = false }
+                    onDismissRequest = { expandedStart = false },
 
                 ) {
                     SettingsScreen.hours.forEach { label ->
@@ -193,22 +196,23 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
                             selectedStart = label
                             expandedStart = false
                         }) {
-                            Text(text = label)
+                            Text(text = label, color =  MaterialTheme.colors.onBackground)
                         }
                     }
                 }
 
                 OutlinedTextField(value = selectedStartTOD,
                     onValueChange ={selectedStartTOD = it},
-                    modifier = Modifier.fillMaxWidth(0.5f)
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
                         .onGloballyPositioned { coordinates ->
-                            startTextSizeTOD = coordinates.size.toSize()},
-//                    label = {Text("A.M.", fontSize = 3.em)},
+                            startTextSizeTOD = coordinates.size.toSize()
+                        },
                     trailingIcon = {
                         Icon(startIconTOD,"contentDescription",
                             Modifier.clickable { expandedStartTOD = !expandedStartTOD })
                     },
-                    textStyle = TextStyle(fontSize = 2.em),
+                    textStyle = TextStyle(fontSize = 3.em,color =  MaterialTheme.colors.onBackground),
                     readOnly = true
                 )
                 DropdownMenu(
@@ -221,7 +225,7 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
                             selectedStartTOD = label
                             expandedStartTOD = false
                         }) {
-                            Text(text = label)
+                            Text(text = label, color =  MaterialTheme.colors.onBackground)
                         }
                     }
                 }
@@ -250,19 +254,22 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
             var endTextSizeTOD by remember{ mutableStateOf(Size.Zero)}
             Row( horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically)
             {
-                Text("End Time:  \t")
+                Text("End Time:  \t", color =  MaterialTheme.colors.onBackground)
 
                 OutlinedTextField(value = selectedEnd,
                     onValueChange ={selectedEnd = it},
-                    modifier = Modifier.fillMaxWidth(0.4f)
+                    modifier = Modifier
+                        .fillMaxWidth(0.4f)
                         .onGloballyPositioned { coordinates ->
-                            endTextSize = coordinates.size.toSize()},
+                            endTextSize = coordinates.size.toSize()
+                        },
 //                    label = {Text("0:00")},
                     trailingIcon = {
                         Icon(endIcon,"contentDescription",
                             Modifier.clickable { expandedEnd = !expandedEnd })
                     },
-                    readOnly = true
+                    readOnly = true,
+                    textStyle = TextStyle(color = MaterialTheme.colors.onBackground)
                 )
                 DropdownMenu(
                     expanded = expandedEnd,
@@ -274,7 +281,7 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
                             selectedEnd = label
                             expandedEnd = false
                         }) {
-                            Text(text = label)
+                            Text(text = label, color =  MaterialTheme.colors.onBackground)
                         }
                     }
                 }
@@ -282,15 +289,16 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
 
                 OutlinedTextField(value = selectedEndTOD,
                     onValueChange ={selectedEndTOD = it},
-                    modifier = Modifier.fillMaxWidth(0.5f)
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
                         .onGloballyPositioned { coordinates ->
-                            endTextSizeTOD = coordinates.size.toSize()},
-//                    label = {Text("A.M.", fontSize = 3.em)},
+                            endTextSizeTOD = coordinates.size.toSize()
+                        },
                     trailingIcon = {
                         Icon(endIconTOD,"contentDescription",
                             Modifier.clickable { expandedEndTOD = !expandedEndTOD })
                     },
-                    textStyle = TextStyle(fontSize = 2.em),
+                    textStyle = TextStyle(fontSize = 3.em, color = MaterialTheme.colors.onBackground),
                     readOnly = true
                 )
                 DropdownMenu(
@@ -303,7 +311,7 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
                             selectedEndTOD = label
                             expandedEndTOD = false
                         }) {
-                            Text(text = label)
+                            Text(text = label, color =  MaterialTheme.colors.onBackground)
                         }
                     }
                 }

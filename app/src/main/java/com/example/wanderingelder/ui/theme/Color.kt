@@ -2,7 +2,22 @@ package com.example.wanderingelder.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple200 = Color(0xFFBB86FC)
-val Purple500 = Color(0xFF6200EE)
-val Purple700 = Color(0xFF3700B3)
-val Teal200 = Color(0xFF03DAC5)
+val backgroundColor = Color(0xFF4b636e)
+val onBackgroundColor = Color.White
+
+val primaryLight = Color(0xffccc0ae)
+val onPrimaryLight = Color.Black
+val primaryVariantLight = Color(0xFF8eacbb)
+val secondaryLight = Color(0xff5472d3)
+val onSecondaryLight = Color.Black
+val surfaceColorLight = Color(0xFF8eacbb)
+val onSurfaceColorLight = Color.Black
+
+val primaryDark = Color(0xff00701a)
+val onPrimaryDark = Color(0xFF8eacbb)
+val primaryVariantDark = Color(0xFF8eacbb)
+val secondaryDark = Color(0xff002171)
+val onSecondaryDark = Color(0xFF8eacbb)
+val surfaceColorDark = Color(0xFF8eacbb)
+val onSurfaceColorDark = Color(0xFF8eacbb)
+

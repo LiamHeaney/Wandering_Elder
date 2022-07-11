@@ -84,13 +84,30 @@ object GeofenceRepo
     @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("MissingPermission")
     fun addGeofenceAtCurrentLocation(name:String="Home") {
+        mActivity.askForPermissions()
         fusedLocationProviderClient.lastLocation.apply {
             addOnSuccessListener { location ->
                 if (location != null) {
                    addGeofence(location.latitude, location.longitude, Geofence.GEOFENCE_TRANSITION_EXIT, name)
                 }
+                addOnFailureListener {
+                    println("Location Failed to Add")
+                    mActivity.showMsg("Failure! Location Permissions not granted!")
+                }
+                addOnCanceledListener {
+                    println("Location Failed to Add")
+                    mActivity.showMsg("Failure! Location Permissions not granted!")
+                }
             }
         }
+        try{
+            println(fusedLocationProviderClient.lastLocation.result)
+        }catch (e:Exception)
+        {
+            println("Location Failed to Add")
+            mActivity.showMsg("Failure! Location Permissions not granted!")
+        }
+
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -105,6 +122,7 @@ object GeofenceRepo
     ) {
 
         println("Attempting to add geofence from REPO")
+        mActivity.askForPermissions()
         lastLat = lat
         lastLong = long
         CoroutineScope(Dispatchers.Default).launch {

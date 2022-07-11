@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -53,7 +54,6 @@ fun LaunchGeofencesScreen()
 fun GeofencesList(viewModel: GeofencesScreenViewModel)
 {
     val allGeofences by viewModel.allMarkers.observeAsState(listOf())
-//    val shownGeofences by viewModel.displayedMarkers.observeAsState(listOf())
     Column(modifier = Modifier
         .fillMaxWidth()
         .fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally){
@@ -62,10 +62,10 @@ fun GeofencesList(viewModel: GeofencesScreenViewModel)
                 CoroutineScope(Dispatchers.Default).launch {dataSource.dao.clearDatabase()  }
             },
             modifier = Modifier
-                .background(Color.Transparent)
+                .background(MaterialTheme.colors.surface)
                 .fillMaxHeight(.1f))
         {
-            Text("  Click here to Clear Database  ")
+            Text("  Click here to Clear Database  ", color = MaterialTheme.colors.onSurface)
         }
         Spacer(modifier = Modifier.fillMaxHeight(0.05f))
         GeofencesColumn(geofences = allGeofences, viewModel = viewModel)
@@ -87,23 +87,25 @@ fun GeofencesColumn(geofences:List<Marker>, viewModel: GeofencesScreenViewModel)
 @Composable
 fun GeofenceItem(marker: Marker, viewModel: GeofencesScreenViewModel)
 {
-    Surface(border = BorderStroke(2.dp, Color.LightGray), modifier = Modifier.background(Color.Blue, RectangleShape)){
+    Surface(border = BorderStroke(2.dp, MaterialTheme.colors.onSecondary),
+        modifier = Modifier.background(MaterialTheme.colors.secondary, RectangleShape)){
         Row(modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly) {
             Surface(modifier = Modifier
                 .fillMaxWidth(0.7f)
-                .background(color = Color.Black)) {
+                .background(color = MaterialTheme.colors.surface)) {
                 Column {
                     Spacer(modifier = Modifier.size(5.dp))
                     Text("${marker.name}\n" +
                             "Latitude: ${String.format("%.2f",marker.latitude)}\t\t " +
-                            "Longitude: ${String.format("%.2f",marker.longitude)}")
+                            "Longitude: ${String.format("%.2f",marker.longitude)}",
+                        color = MaterialTheme.colors.onSurface)
                     }
                 }
                
             Surface(modifier = Modifier
                 .fillMaxWidth(0.3f)
-                .background(color = Color.Black)) {
+                .background(color = MaterialTheme.colors.background)) {
                 Button(
                     onClick = {
                         viewModel.repo.deleteMarker(marker.name)
