@@ -2,6 +2,8 @@ package com.example.wanderingelder.SettingScreen
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
@@ -25,7 +27,7 @@ import com.example.wanderingelder.SettingScreen.SettingsScreen.mActivity
 import com.example.wanderingelder.SettingScreen.SettingsScreen.phone_number
 import com.example.wanderingelder.SettingScreen.SettingsScreen.sharedPreferences
 
-
+//Singleton class, should be replaced with a viewmodel.
 object SettingsScreen {
     lateinit var sharedPreferences: SharedPreferences
     var phone_number:String = "0000000000"
@@ -38,14 +40,18 @@ object SettingsScreen {
 
 }
 
-@OptIn(ExperimentalUnitApi::class)
+//Main compose function for the setting screen
+@RequiresApi(Build.VERSION_CODES.M)
 @Composable
 fun launchSettingsScreen(context:Context, activity: MainActivity)
 {
+    //initializations
     mActivity=activity
     sharedPreferences =context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
     phone_number = sharedPreferences.getString("target_phone_number", "0000000000")?:"0000000000"
 
+    //this kind-of bypasses the need for a viewmodel,
+    //as it creates variables that are not destroyed when the function is recomposed
     var text by remember {
         mutableStateOf(phone_number)
     }
@@ -56,20 +62,17 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
         .fillMaxWidth()
         .fillMaxHeight(),
         verticalArrangement = Arrangement.Center,
-//        horizontalAlignment = Alignment.CenterHorizontally
         )
     {
+        //Here we display the saved phone number
         Row() {
             Text(text = "Current phone number:", color =  MaterialTheme.colors.onBackground)
-
-
             Text(text = "  +1-"+phoneText.substring(0, 3)+"-"+
                     phoneText.substring(3, 6)+"-"+
                     phoneText.substring(6), color =  MaterialTheme.colors.onBackground)
 
-
-
         }
+        //This is where users type in a phone number
         val focusManager = LocalFocusManager.current
         TextField(value = text,
             colors =  TextFieldDefaults.textFieldColors(textColor =  MaterialTheme.colors.onBackground),
@@ -89,6 +92,7 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
                 onDone={
                     if (text.isNotEmpty() && text.length>=10 && text!="0000000000")
                     {
+                        mActivity.askForSMSPermission()
                         if(text.length>10) text = text.substring(0, 10)
                         mActivity.showMsg("Saved phone number : +1-${text.substring(0,3)+"-"+text.subSequence(3,6)+"-"+text.subSequence(6, text.length)}")
                         sharedPreferences.edit().putString("target_phone_number", text).apply()
@@ -106,6 +110,7 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
             .fillMaxSize(),
             horizontalAlignment=Alignment.CenterHorizontally)
         {
+            //Creates spaced-out "save" and "clear" buttons
             Row(modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly)
             {
@@ -114,6 +119,9 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
                     Text(text = "Save")
                 },
                     onClick = {
+                        //We ask for permission to send text messages,
+                        //then go through the checks to verify and save the valid phone number
+                        mActivity.askForSMSPermission()
                         if (!text.isNullOrEmpty() && text.length>=10 && text!="0000000000")
                         {
                             if(text.length>10) text = text.substring(0, 10)
@@ -145,6 +153,9 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
             var expandedStart by remember {
                 mutableStateOf(false)
             }
+
+            //These next sections create dropdown menus with hours of the day
+            //They are very long for what they do
             val startIcon = if (expandedStart)
                 Icons.Filled.KeyboardArrowUp
             else
@@ -316,6 +327,7 @@ fun launchSettingsScreen(context:Context, activity: MainActivity)
                     }
                 }
             }
+            //Finally a save button for the selected times
             Button(content = {
                 Text(text = "Save Times")
             },

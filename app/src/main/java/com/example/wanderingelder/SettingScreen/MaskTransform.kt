@@ -5,6 +5,7 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 
+//A class created to mask a phone number, displaying the number as xxx-xxx-xxxx
 class MaskTransform(): VisualTransformation
 {
     override fun filter(text: AnnotatedString): TransformedText {
@@ -18,18 +19,13 @@ class MaskTransform(): VisualTransformation
             out += trimmed[i]
             if (i==2||i==5) out += "-"
         }
-
         val numberOffsetTranslator = object : OffsetMapping {
             override fun originalToTransformed(offset: Int): Int {
-//                Log.e("Offset", ""+offset)
                 if (offset <=2) return offset
                 if (offset <= 5) return offset+1
                 if (offset<= 10) return offset+2
-
                 return 12
-
             }
-
             override fun transformedToOriginal(offset: Int): Int {
 //                Log.e("Offset", ""+offset)
                 if (offset <=4) return offset
@@ -37,7 +33,6 @@ class MaskTransform(): VisualTransformation
                 return 9
             }
         }
-
         return TransformedText(AnnotatedString(out), numberOffsetTranslator)
     }
 }

@@ -48,39 +48,49 @@ object GeofenceRepo
     private lateinit var mActivity: MainActivity
     lateinit var dataSource:MarkersDatabase
     private lateinit var sharedPreferences: SharedPreferences
+    var isInitialized = false
 
     @SuppressLint("UnspecifiedImmutableFlag")
     @RequiresApi(Build.VERSION_CODES.O)
     fun initialize(context: Context, activity: MainActivity)
     {
-        sharedPreferences =context.getSharedPreferences("prefs", MODE_PRIVATE)
-        dataSource = MarkersDatabase.getInstance(context)
-        mActivity =activity
-        myContext =context
-        geocoder = Geocoder(context)
-        Locale.getDefault()
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+        //This ensures that the initialization code is only called once,
+        //despite the multiple paths a user could go through that could initialize it
+        if(!isInitialized)
+        {
+            sharedPreferences =context.getSharedPreferences("prefs", MODE_PRIVATE)
+            dataSource = MarkersDatabase.getInstance(context)
+            mActivity =activity
+            myContext =context
+            geocoder = Geocoder(context)
+            Locale.getDefault()
+            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
 
-        geofencingClient = LocationServices.getGeofencingClient(context)
+            geofencingClient = LocationServices.getGeofencingClient(context)
 
-        notificationManager = context.applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            //These are not actually used,
+            //it is legacy code from when notifications were the primary alert to the user
+//            notificationManager = context.applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+//            notificationManager.createNotificationChannel(
+//                NotificationChannel("1",
+//                    "Notification Channel",
+//                    NotificationManager.IMPORTANCE_HIGH).apply { description = "Geofence added alert" })
 
-        notificationManager.createNotificationChannel(
-            NotificationChannel("1",
-                "Notification Channel",
-                NotificationManager.IMPORTANCE_HIGH).apply { description = "Geofence added alert" })
+            myGeoFencePendingIntent = PendingIntent.getBroadcast(context,
+                0,
+                Intent(context, GeofenceBroadcastReceiver::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT)
 
-        myGeoFencePendingIntent = PendingIntent.getBroadcast(context,
-            0,
-            Intent(context, GeofenceBroadcastReceiver::class.java),
-            PendingIntent.FLAG_UPDATE_CURRENT)
-
-        coroutineScope.launch {
-//            dataSource.dao.clearDatabase()
-            loadGeofencesFromDB()
+            coroutineScope.launch {
+                loadGeofencesFromDB()
+            }
         }
+        isInitialized=true
+
     }
 
+    //This just gets the current location,
+    //then calls add geofence, with the lat and long it acquired
     @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("MissingPermission")
     fun addGeofenceAtCurrentLocation(name:String="Home") {
@@ -90,14 +100,15 @@ object GeofenceRepo
                 if (location != null) {
                    addGeofence(location.latitude, location.longitude, Geofence.GEOFENCE_TRANSITION_EXIT, name)
                 }
-                addOnFailureListener {
-                    println("Location Failed to Add")
-                    mActivity.showMsg("Failure! Location Permissions not granted!")
-                }
-                addOnCanceledListener {
-                    println("Location Failed to Add")
-                    mActivity.showMsg("Failure! Location Permissions not granted!")
-                }
+
+            }
+            addOnFailureListener {
+                println("Location Failed to Add")
+//                    mActivity.showMsg("Failure! Location Permissions not granted!")
+            }
+            addOnCanceledListener {
+                println("Location Failed to Add")
+//                    mActivity.showMsg("Failure! Location Permissions not granted!")
             }
         }
         try{
@@ -105,7 +116,7 @@ object GeofenceRepo
         }catch (e:Exception)
         {
             println("Location Failed to Add")
-            mActivity.showMsg("Failure! Location Permissions not granted!")
+//            mActivity.showMsg("Failure! Location Permissions not granted!")
         }
 
     }
@@ -126,7 +137,8 @@ object GeofenceRepo
         lastLat = lat
         lastLong = long
         CoroutineScope(Dispatchers.Default).launch {
-//            if(true){
+            //If there is a conflict (locations too close to one another)
+            //Do not add the geofence
             if(locConflict(lat, long)){
                 if(!silent)
                 {
@@ -135,6 +147,7 @@ object GeofenceRepo
                 }
 
             }
+            //Also handle if the geofence's name is already in use
             else if(nameConflict(name)){
                 if(!silent)
                 {
@@ -198,7 +211,6 @@ object GeofenceRepo
     {
         val conflict = locConflict(lat,long) || nameConflict(name)
         println("Conflict?: $conflict")
-        println("Database Size: "+ dataSource.dao.getSize()+1)
         if(!conflict && dataSource.dao.getSize()<=100)
             dataSource.dao.insert(
                 Marker(

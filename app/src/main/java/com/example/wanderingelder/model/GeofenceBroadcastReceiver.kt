@@ -21,19 +21,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
+//This handles sending text messages when a geofence is broken
 class GeofenceBroadcastReceiver : BroadcastReceiver()
 {
     lateinit var sharedPreferences: SharedPreferences
+    @RequiresApi(Build.VERSION_CODES.O)
     var lastActivation:LocalDateTime= LocalDateTime.now()
-    init{
-        println("Broadcast Receiver online")
-
-    }
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onReceive(p0: Context?, p1: Intent?) {
 
         sharedPreferences =p0!!.getSharedPreferences("prefs", Context.MODE_PRIVATE)
 
+        //This ensures a max of 1 message per 5 minutes
         if(LocalDateTime.now() < lastActivation.plusMinutes(5))
             return
         else
@@ -47,21 +46,23 @@ class GeofenceBroadcastReceiver : BroadcastReceiver()
             println(errorMsg)
             return
         }
-        CoroutineScope(Dispatchers.Default).launch {
-            geoFencingEvent?.triggeringGeofences?.get(0)?.requestId?.let {
-                var marker = dataSource.dao.get(it)
-
-                if(marker!=null)
-                {
-                    var startTime = marker.startTime.substring(0, 2).toInt()
-                    var endTime = marker.endTime.substring(0, 2).toInt()
-                }
-
-
-
-
-            }
-        }
+        //This is not currently functional,
+        //but is for later versions of the code that will allow for individual geofences to have their own times
+//        CoroutineScope(Dispatchers.Default).launch {
+//            geoFencingEvent?.triggeringGeofences?.get(0)?.requestId?.let {
+//                var marker = dataSource.dao.get(it)
+//
+//                if(marker!=null)
+//                {
+//                    var startTime = marker.startTime.substring(0, 2).toInt()
+//                    var endTime = marker.endTime.substring(0, 2).toInt()
+//                }
+//
+//
+//
+//
+//            }
+//        }
 
         println("Time is: "+LocalDateTime.now().hour)
         var startTime = sharedPreferences.getString("startHour", "0:00")?.substring(0, 1)?.toInt()?:0

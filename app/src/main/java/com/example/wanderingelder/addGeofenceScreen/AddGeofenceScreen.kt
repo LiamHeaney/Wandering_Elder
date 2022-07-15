@@ -14,6 +14,7 @@ import com.google.android.gms.location.Geofence
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Application
+import android.content.Context
 import android.location.Geocoder
 import android.os.Build
 import android.util.Log
@@ -39,10 +40,11 @@ import com.example.wanderingelder.geofences.screen.GeofencesList
 import com.example.wanderingelder.geofences.screen.GeofencesScreenViewModel
 import com.example.wanderingelder.geofences.screen.GeofencesScreenViewModelFactory
 import com.example.wanderingelder.model.GeofenceRepo
+import com.example.wanderingelder.ui.theme.backgroundColor
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun LaunchAddGeofencesScreen()
+fun LaunchAddGeofencesScreen(activity: MainActivity)
 {
 
     LocalViewModelStoreOwner.current?.let { val viewModel: AddGeofenceScreenViewModel =
@@ -53,24 +55,24 @@ fun LaunchAddGeofencesScreen()
                 LocalContext.current.applicationContext as Application
             )
         )
-        AddGeofenceScreen(viewModel = viewModel, activity = MainActivity())
+        AddGeofenceScreen(viewModel = viewModel, activity = activity, context = LocalContext.current)
     }
 
 
 
 }
 var addressText:String = ""
-
-    lateinit var geocoder : Geocoder
+lateinit var geocoder : Geocoder
 
 @RequiresApi(Build.VERSION_CODES.O)
-@SuppressLint("MissingPermission")
 @Composable
-fun AddGeofenceScreen(viewModel: AddGeofenceScreenViewModel, activity: MainActivity)
+fun AddGeofenceScreen(viewModel: AddGeofenceScreenViewModel, activity: MainActivity, context: Context)
 {
+    geocoder = Geocoder(context)
     Column(
         modifier = Modifier
-            .fillMaxWidth().fillMaxHeight()
+            .fillMaxWidth()
+            .fillMaxHeight()
             .background(MaterialTheme.colors.background),
         horizontalAlignment=Alignment.CenterHorizontally,
 //        verticalArrangement = Arrangement.Center
@@ -92,60 +94,39 @@ fun AddGeofenceScreen(viewModel: AddGeofenceScreenViewModel, activity: MainActiv
                 onDone ={
                     focusManager.clearFocus()
                 }
-            ), textStyle = TextStyle(color = MaterialTheme.colors.onBackground)
+            ),
+            colors = TextFieldDefaults.textFieldColors(textColor = MaterialTheme.colors.onBackground)
         )
 
-        Button(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.2f),
+        Button(modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(0.2f),
             shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.textButtonColors(backgroundColor = MaterialTheme.colors.primaryVariant,
-                contentColor = MaterialTheme.colors.onBackground),
+            colors = ButtonDefaults.textButtonColors(backgroundColor = MaterialTheme.colors.background,
+                contentColor = MaterialTheme.colors.background),
             onClick = { println("Adding Current Location")
                 Log.e("Button", "Button Clicked")
 
                 GeofenceRepo.addGeofenceAtCurrentLocation(markerName)
             },content = {
-                val txtSize = 50f
-                val textPaintStroke = Paint().asFrameworkPaint().apply {
-                    isAntiAlias = true
-                    style = android.graphics.Paint.Style.STROKE
-                    textSize = txtSize
-                    color = android.graphics.Color.BLACK
-                    strokeWidth = 6f
-                    strokeMiter= 5f
-                    strokeJoin = android.graphics.Paint.Join.ROUND
-                }
 
-                val textPaint = Paint().asFrameworkPaint().apply {
-                    isAntiAlias = true
-                    style = android.graphics.Paint.Style.FILL
-                    textSize = txtSize
-                    color = android.graphics.Color.WHITE
-                }
-
-                Canvas(
-                    modifier = Modifier.fillMaxSize()
-                        .offset(x= LocalDensity.current.density*txtSize.dp/16,
-                            y= LocalDensity.current.density*txtSize.dp/4
-                        ),
-                    onDraw = {
-                        drawIntoCanvas {
-                            it.nativeCanvas.drawText(
-                                "Click here to add a geofence at this location",
-                                0f,
-                                0.dp.toPx(),
-                                textPaintStroke,
-                            )
-
-                            it.nativeCanvas.drawText(
-                                "Click here to add a geofence at this location",
-                                0f,
-                                0.dp.toPx(),
-                                textPaint
-                            )
-
+                TextField(
+                    value = "", onValueChange = { },
+                    label = { Text("Click to add a marker at this location", color = MaterialTheme.colors.onSecondary) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+//                        .absolutePadding(10.dp, 10.dp, 10.dp, 10.dp)
+                    ,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone ={
+                            focusManager.clearFocus()
                         }
-                    },
+                    ),
+                    colors = TextFieldDefaults.textFieldColors(backgroundColor =  MaterialTheme.colors.secondary),
+                    enabled = false
                 )
+//
             })
         var text by remember {
             mutableStateOf("")
@@ -160,8 +141,7 @@ fun AddGeofenceScreen(viewModel: AddGeofenceScreenViewModel, activity: MainActiv
             }
             @Suppress("NAME_SHADOWING") val focusManager = LocalFocusManager.current
             TextField(
-                value = text, onValueChange = { text = it
-                    addressText = text},
+                value = "", onValueChange = {},
                 label = { Text("Enter the address you would like to monitor", color = MaterialTheme.colors.onBackground) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -171,28 +151,49 @@ fun AddGeofenceScreen(viewModel: AddGeofenceScreenViewModel, activity: MainActiv
                     onDone ={
                         focusManager.clearFocus()
                     }
-                )
-
-
+                ),
+                colors = TextFieldDefaults.textFieldColors(textColor = MaterialTheme.colors.onBackground)
             )
         }
 
-        Button(onClick = {
+        Button(modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(0.3f),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.textButtonColors(backgroundColor = MaterialTheme.colors.background,
+                contentColor = MaterialTheme.colors.background),
+            onClick = {
             println("Attempting to add geofence at: $addressText")
             try{
                 val addressList = geocoder.getFromLocationName(addressText, 1)
-
                 GeofenceRepo.addGeofence(addressList[0].latitude, addressList[0].longitude, Geofence.GEOFENCE_TRANSITION_EXIT,markerName)
 
             }catch(e:Exception)
             {
                 activity.showMsg("Failed to translate input into address")
                 Log.e("Error", "Failed to translate input into address")
+                Log.e("Error", "Geocoder? "+(geocoder!=null).toString())
             }
 
         },
             content ={
-                Text("Add geofence at address location")
+                TextField(
+                    value = text, onValueChange = { text = it
+                        addressText = text},
+                    label = { Text("Add Geofence at address location", color = MaterialTheme.colors.onSecondary) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+//                        .absolutePadding(10.dp, 10.dp, 10.dp, 10.dp)
+                        ,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone ={
+                            focusManager.clearFocus()
+                        }
+                    ),
+                    colors = TextFieldDefaults.textFieldColors(backgroundColor = MaterialTheme.colors.secondary),
+                    enabled = false
+                )
             })
 
         MakeSliderWithLabels()
@@ -205,9 +206,9 @@ fun AddGeofenceScreen(viewModel: AddGeofenceScreenViewModel, activity: MainActiv
         var distance:Float by remember{ mutableStateOf(100f) }
         Column() {
             Row() {
-                Text("50m")
+                Text(text ="50m", style = TextStyle(color = MaterialTheme.colors.onBackground))
                 Spacer(modifier = Modifier.size(maxOf(0f,((distance-125)*.50f)).dp, 10.dp))
-                Text(""+(distance-distance%25).toInt()+"m")
+                Text(""+(distance-distance%25).toInt()+"m", style = TextStyle(color = MaterialTheme.colors.onBackground))
             }
 
             Slider(value = distance,

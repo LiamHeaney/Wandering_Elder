@@ -1,14 +1,14 @@
 package com.example.wanderingelder.ui.theme
 
 import androidx.compose.ui.graphics.Color
-
-val backgroundColor = Color(0xFF4b636e)
+//This is a list of colors for use in the application. If you wish to change a color, do so here
+val backgroundColor = Color(0xff7f0000)
 val onBackgroundColor = Color.White
 
-val primaryLight = Color(0xffccc0ae)
+val primaryLight = Color(0xffffff74)
 val onPrimaryLight = Color.Black
-val primaryVariantLight = Color(0xFF8eacbb)
-val secondaryLight = Color(0xff5472d3)
+val primaryVariantLight = Color.White
+val secondaryLight = Color(0xffffc400)
 val onSecondaryLight = Color.Black
 val surfaceColorLight = Color(0xFF8eacbb)
 val onSurfaceColorLight = Color.Black

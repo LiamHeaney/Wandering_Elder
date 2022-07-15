@@ -7,17 +7,24 @@ import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
+//This is a mapping of colors to the DarkTheme
+//Currently, it is no different than the light theme
 private val DarkColorPalette = darkColors(
-    primary = primaryDark,
-    primaryVariant = primaryVariantDark,
-    secondary = secondaryDark,
-    background = Color.Gray
+    primary = primaryLight,
+    onPrimary = onPrimaryLight,
+    primaryVariant = primaryVariantLight,
+    secondary = secondaryLight,
+    onSecondary = onSecondaryLight,
+    background = backgroundColor,
+    onBackground = onBackgroundColor,
+    surface = surfaceColorLight,
+    onSurface = onSurfaceColorLight
 )
-
+//This is a mapping of colors to the LightTheme
 private val LightColorPalette = lightColors(
     primary = primaryLight,
     onPrimary = onPrimaryLight,
-    primaryVariant = primaryVariantDark,
+    primaryVariant = primaryVariantLight,
     secondary = secondaryLight,
     onSecondary = onSecondaryLight,
     background = backgroundColor,
@@ -27,6 +34,7 @@ private val LightColorPalette = lightColors(
 
 )
 
+//This selects dark or light theme based on the setting of the phone
 @Composable
 fun WanderingElderTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

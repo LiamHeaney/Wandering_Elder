@@ -12,8 +12,8 @@ class SnackBar {
 @Composable
 fun mySnackBar()
 {
-    val scope = rememberCoroutineScope()
-    val state = remember{ SnackbarHostState() }
+//    val scope = rememberCoroutineScope()
+//    val state = remember{ SnackbarHostState() }
 
 //    scope.launch { state.showSnackbar("Hello from Snacks") }
 }
