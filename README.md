@@ -12,7 +12,7 @@ This application is intended to be a standalone application; it does not require
 This is not designed to track unwilling phones; it is very easy for someone to disable this application if they desire. This is to provide their families and loved ones some form of a safety net should something happen; it is not intended to be used as spying software. Certain methods have been taken to ensure that the user is aware should the phone send alerts to someone else.
 
 
-Instructions:
+* Instructions:
 
 On your Android Phone:
 
@@ -28,7 +28,7 @@ Copy the hyperlink on the project page (under code->HTTPS). Open up Android stud
 Once this is done (Which will take a long time) you will have to build and run the project. You must ensure an Android phone is selected in the emulator menu (you may have to create a new one from the Emulated Devices Manager). Once selected, simply click the button at the top of Android Studios next to the selected emulated device in order to launch the device and install the program on it.
 
 
-#Once you have installed the program on a device#
+# Once you have installed the program on a device
 
 Run the Program.
 
