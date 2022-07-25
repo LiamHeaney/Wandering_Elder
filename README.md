@@ -16,7 +16,7 @@ This is not designed to track unwilling phones; it is very easy for someone to d
 
 On your Android Phone:
 
-* Download [WanderingElderAPK.zip](https://github.com/LiamHeaney/Wandering_Elder/files/9182329/WanderingElderAPK.zip).
+* Download and unpack [WanderingElderAPK.zip](https://github.com/LiamHeaney/Wandering_Elder/files/9182329/WanderingElderAPK.zip).
 This will prompt you for permissions to install from a non-trusted source. Once installed, you can run the application by clicking on the icon. 
 
 On your Computer (Android Studios Emulator)
