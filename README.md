@@ -12,25 +12,25 @@ This application is intended to be a standalone application; it does not require
 This is not designed to track unwilling phones; it is very easy for someone to disable this application if they desire. This is to provide their families and loved ones some form of a safety net should something happen; it is not intended to be used as spying software. Certain methods have been taken to ensure that the user is aware should the phone send alerts to someone else.
 
 
-* Instructions:
+# Instructions:
 
 On your Android Phone:
 
-Download [WanderingElderAPK.zip](https://github.com/LiamHeaney/Wandering_Elder/files/9182329/WanderingElderAPK.zip).
+* Download [WanderingElderAPK.zip](https://github.com/LiamHeaney/Wandering_Elder/files/9182329/WanderingElderAPK.zip).
 This will prompt you for permissions to install from a non-trusted source. Once installed, you can run the application by clicking on the icon. 
 
 On your Computer (Android Studios Emulator)
 
-This assumes you have already installed Android studio and set it up to run emulators (notably, requires Bios setup and installation of Intel Hardware Accelerated Execution Manager (HAXM) ).
+* This assumes you have already installed Android studio and set it up to run emulators (notably, requires Bios setup and installation of Intel Hardware Accelerated Execution Manager (HAXM) ).
 
-Copy the hyperlink on the project page (under code->HTTPS). Open up Android studios (If you had a previous project open, close it). The opening screen will have an option to "Create a new project from VCS [version control system]". Paste the hyperlink from before into the text box and press enter. You may be prompted for github login information in order to access the repository.
+* Copy the hyperlink on the project page (under code->HTTPS). Open up Android studios (If you had a previous project open, close it). The opening screen will have an option to "Create a new project from VCS [version control system]". Paste the hyperlink from before into the text box and press enter. You may be prompted for github login information in order to access the repository.
 
-Once this is done (Which will take a long time) you will have to build and run the project. You must ensure an Android phone is selected in the emulator menu (you may have to create a new one from the Emulated Devices Manager). Once selected, simply click the button at the top of Android Studios next to the selected emulated device in order to launch the device and install the program on it.
+* Once this is done (Which will take a long time) you will have to build and run the project. You must ensure an Android phone is selected in the emulator menu (you may have to create a new one from the Emulated Devices Manager). Once selected, simply click the button at the top of Android Studios next to the selected emulated device in order to launch the device and install the program on it.
 
 
 # Once you have installed the program on a device
 
-Run the Program.
+* Run the Program.
 
-You will be prompted for permissions at various points; if you do not accept these permissions the application will not run correctly. 
+* You will be prompted for permissions at various points; if you do not accept these permissions the application will not run correctly. 
 
